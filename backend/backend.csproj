@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>sports-shop-management-system-backend-9f7c3d2a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
