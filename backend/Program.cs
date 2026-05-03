@@ -1,11 +1,12 @@
 using System.Text;
 using backend.Contracts.Auth;
 using backend.Data;
+using backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,17 @@ var jwtSigningKey = jwtSection["SigningKey"];
 if (string.IsNullOrWhiteSpace(jwtSigningKey))
 {
     throw new InvalidOperationException(
-        "Jwt:SigningKey nuk është konfiguruar. Për development vendoseni me: dotnet user-secrets set \"Jwt:SigningKey\" \"<çelës-i-gjatë>\" --project backend");
+        "Jwt:SigningKey nuk është konfiguruar. Për development: dotnet user-secrets set \"Jwt:SigningKey\" \"<string i gjatë>\" --project backend");
+}
+
+// HS256 me IdentityModel 8.x: çelësi duhet >256 bit (së paku 32 byte UTF-8); përndryshe IDX10720.
+const int minSigningKeyBytes = 32;
+var signingKeyByteCount = Encoding.UTF8.GetByteCount(jwtSigningKey);
+if (signingKeyByteCount < minSigningKeyBytes)
+{
+    throw new InvalidOperationException(
+        $"Jwt:SigningKey është shumë i shkurtër ({signingKeyByteCount} byte, duhen së paku {minSigningKeyBytes}). " +
+        "Shembull: dotnet user-secrets set \"Jwt:SigningKey\" \"ErisSylejmani-SportsShop-DevKey-2026!\" --project backend");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -56,6 +67,9 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddSingleton<AccessTokenService>();
+builder.Services.AddScoped<RefreshTokenService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -76,20 +90,6 @@ builder.Services.AddSwaggerGen(options =>
             "JWT Authorization header përmes skemës Bearer. Fut vetëm token-in (pa prefiks \"Bearer \")."
     });
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
 });
 
 var app = builder.Build();
@@ -178,6 +178,95 @@ app.MapPost(
                 roles.ToList());
 
             return Results.Created($"/api/users/{user.Id}", response);
+        })
+    .AllowAnonymous()
+    .WithTags("Auth");
+
+app.MapPost(
+        "/api/auth/login",
+        async Task<IResult> (
+            LoginRequest body,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            AppDbContext db,
+            AccessTokenService tokenService,
+            IConfiguration configuration) =>
+        {
+            var email = body.Email.Trim();
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null || !user.EshteAktiv)
+            {
+                return Results.Json(
+                    new { message = "Email ose fjalëkalim i gabuar." },
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var check = await signInManager.CheckPasswordSignInAsync(user, body.Password, lockoutOnFailure: true);
+            if (check.IsLockedOut)
+            {
+                return Results.Json(
+                    new { message = "Llogaria është e bllokuar. Provoni më vonë." },
+                    statusCode: StatusCodes.Status423Locked);
+            }
+
+            if (!check.Succeeded)
+            {
+                return Results.Json(
+                    new { message = "Email ose fjalëkalim i gabuar." },
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var roleNames = await userManager.GetRolesAsync(user);
+            var (accessToken, accessExpiresAt) = tokenService.CreateAccessToken(user, roleNames);
+
+            var refreshValue = AccessTokenService.CreateRefreshTokenValue();
+            var refreshDays = int.TryParse(configuration["Jwt:RefreshTokenDays"], out var rd) ? rd : 7;
+            var refreshExpires = DateTime.UtcNow.AddDays(refreshDays);
+
+            db.RefreshTokens.Add(new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Token = refreshValue,
+                Expires = refreshExpires,
+                Created = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            var response = new AuthResponse(
+                accessToken,
+                refreshValue,
+                accessExpiresAt,
+                new DateTimeOffset(refreshExpires, TimeSpan.Zero),
+                user.Id,
+                user.Email ?? email,
+                user.Emri,
+                user.Mbiemri,
+                roleNames.ToList());
+
+            return Results.Ok(response);
+        })
+    .AllowAnonymous()
+    .WithTags("Auth");
+
+app.MapPost(
+        "/api/auth/refresh",
+        async Task<IResult> (RefreshRequest body, RefreshTokenService refreshService, CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(body.RefreshToken))
+            {
+                return Results.BadRequest(new { message = "RefreshToken është i detyrueshëm." });
+            }
+
+            var response = await refreshService.TryRefreshAsync(body.RefreshToken, cancellationToken);
+            if (response is null)
+            {
+                return Results.Json(
+                    new { message = "Refresh token i pavlefshëm ose i skaduar." },
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            return Results.Ok(response);
         })
     .AllowAnonymous()
     .WithTags("Auth");
