@@ -107,6 +107,29 @@ app.UseAuthorization();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", message = "API dhe konfigurimi bazë janë aktivë." }));
 
+app.MapGet(
+        "/api/me",
+        async Task<IResult> (UserManager<ApplicationUser> userManager, HttpContext httpContext) =>
+        {
+            var user = await userManager.GetUserAsync(httpContext.User);
+            if (user is null)
+                return Results.Unauthorized();
+
+            var roles = await userManager.GetRolesAsync(user);
+            return Results.Ok(new
+            {
+                user.Id,
+                user.Email,
+                user.Emri,
+                user.Mbiemri,
+                user.PhoneNumber,
+                user.EshteAktiv,
+                Roles = roles
+            });
+        })
+    .RequireAuthorization()
+    .WithTags("Auth");
+
 app.MapGet("/api/roles", async (RoleManager<IdentityRole<Guid>> roleManager) =>
     {
         var roles = await roleManager.Roles
@@ -116,6 +139,7 @@ app.MapGet("/api/roles", async (RoleManager<IdentityRole<Guid>> roleManager) =>
             .ToListAsync();
         return Results.Ok(roles);
     })
+    .RequireAuthorization(policy => policy.RequireRole("Admin"))
     .WithTags("Test");
 
 app.MapPost(
@@ -267,6 +291,50 @@ app.MapPost(
             }
 
             return Results.Ok(response);
+        })
+    .AllowAnonymous()
+    .WithTags("Auth");
+
+app.MapPost(
+        "/api/auth/logout",
+        async Task<IResult> (RefreshRequest body, RefreshTokenService refreshService, CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(body.RefreshToken))
+            {
+                return Results.BadRequest(new { message = "RefreshToken është i detyrueshëm." });
+            }
+
+            var revoked = await refreshService.TryRevokeAsync(body.RefreshToken, cancellationToken);
+            if (!revoked)
+            {
+                return Results.Json(
+                    new { message = "Refresh token i pavlefshëm ose i revokuar." },
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            return Results.Ok(new { message = "Logout u krye me sukses." });
+        })
+    .AllowAnonymous()
+    .WithTags("Auth");
+
+app.MapPost(
+        "/api/auth/revoke",
+        async Task<IResult> (RefreshRequest body, RefreshTokenService refreshService, CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(body.RefreshToken))
+            {
+                return Results.BadRequest(new { message = "RefreshToken është i detyrueshëm." });
+            }
+
+            var revoked = await refreshService.TryRevokeAsync(body.RefreshToken, cancellationToken);
+            if (!revoked)
+            {
+                return Results.Json(
+                    new { message = "Refresh token i pavlefshëm ose i revokuar." },
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            return Results.Ok(new { message = "Refresh token u revokua me sukses." });
         })
     .AllowAnonymous()
     .WithTags("Auth");

@@ -68,4 +68,22 @@ public sealed class RefreshTokenService(
             stored.User.Mbiemri,
             roleNames.ToList());
     }
+
+    public async Task<bool> TryRevokeAsync(string refreshTokenValue, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshTokenValue))
+            return false;
+
+        var trimmed = refreshTokenValue.Trim();
+        var stored = await db.RefreshTokens
+            .AsTracking()
+            .FirstOrDefaultAsync(x => x.Token == trimmed && x.Revoked == null, cancellationToken);
+
+        if (stored is null)
+            return false;
+
+        stored.Revoked = DateTime.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }
