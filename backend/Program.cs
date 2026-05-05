@@ -1,7 +1,9 @@
 using System.Text;
 using backend.Contracts.Auth;
 using backend.Data;
+using backend.Endpoints;
 using backend.Services;
+using backend.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -90,6 +92,7 @@ builder.Services.AddSwaggerGen(options =>
             "JWT Authorization header përmes skemës Bearer. Fut vetëm token-in (pa prefiks \"Bearer \")."
     });
 
+    options.DocumentFilter<BearerAuthDocumentFilter>();
 });
 
 var app = builder.Build();
@@ -338,6 +341,8 @@ app.MapPost(
         })
     .AllowAnonymous()
     .WithTags("Auth");
+
+app.MapAdminUsersEndpoints();
 
 await RoleSeeder.SeedDefaultRolesAsync(app.Services);
 
