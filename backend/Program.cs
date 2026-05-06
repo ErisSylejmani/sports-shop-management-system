@@ -343,6 +343,7 @@ app.MapPost(
     .WithTags("Auth");
 
 app.MapAdminUsersEndpoints();
+app.MapAdminRolesEndpoints();
 
 await RoleSeeder.SeedDefaultRolesAsync(app.Services);
 
