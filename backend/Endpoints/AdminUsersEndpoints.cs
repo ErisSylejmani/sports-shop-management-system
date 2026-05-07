@@ -19,6 +19,8 @@ public static class AdminUsersEndpoints
         group.MapPost("", CreateAsync);
         group.MapPut("{id:guid}", UpdateAsync);
         group.MapDelete("{id:guid}", DeleteAsync);
+        group.MapPost("{id:guid}/roles", AddRoleAsync);
+        group.MapDelete("{id:guid}/roles/{roleName}", RemoveRoleAsync);
 
         return routes;
     }
@@ -237,5 +239,83 @@ public static class AdminUsersEndpoints
         }
 
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> AddRoleAsync(
+        Guid id,
+        AdminUserRoleRequest body,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole<Guid>> roleManager)
+    {
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user is null)
+            return Results.NotFound(new { message = "Përdoruesi nuk u gjet." });
+
+        var roleName = body.RoleName.Trim();
+        if (roleName.Length == 0)
+            return Results.BadRequest(new { message = "Emri i rolit është i detyrueshëm." });
+
+        if (!await roleManager.RoleExistsAsync(roleName))
+            return Results.NotFound(new { message = $"Roli '{roleName}' nuk ekziston." });
+
+        if (await userManager.IsInRoleAsync(user, roleName))
+            return Results.Conflict(new { message = $"Përdoruesi e ka tashmë rolin '{roleName}'." });
+
+        var addResult = await userManager.AddToRoleAsync(user, roleName);
+        if (!addResult.Succeeded)
+        {
+            return Results.BadRequest(new
+            {
+                message = "Caktimi i rolit dështoi.",
+                errors = addResult.Errors.Select(e => e.Description).ToArray()
+            });
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+        return Results.Ok(new { user.Id, Roles = roles.ToList() });
+    }
+
+    private static async Task<IResult> RemoveRoleAsync(
+        Guid id,
+        string roleName,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole<Guid>> roleManager,
+        HttpContext httpContext)
+    {
+        var user = await userManager.FindByIdAsync(id.ToString());
+        if (user is null)
+            return Results.NotFound(new { message = "Përdoruesi nuk u gjet." });
+
+        roleName = roleName.Trim();
+        if (roleName.Length == 0)
+            return Results.BadRequest(new { message = "Emri i rolit është i detyrueshëm." });
+
+        if (!await roleManager.RoleExistsAsync(roleName))
+            return Results.NotFound(new { message = $"Roli '{roleName}' nuk ekziston." });
+
+        if (!await userManager.IsInRoleAsync(user, roleName))
+            return Results.BadRequest(new { message = $"Përdoruesi nuk e ka rolin '{roleName}'." });
+
+        var currentIdClaim = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase) &&
+            currentIdClaim is not null &&
+            Guid.TryParse(currentIdClaim, out var currentId) &&
+            currentId == id)
+        {
+            return Results.BadRequest(new { message = "Nuk mund të heqësh rolin 'Admin' nga vetja." });
+        }
+
+        var removeResult = await userManager.RemoveFromRoleAsync(user, roleName);
+        if (!removeResult.Succeeded)
+        {
+            return Results.BadRequest(new
+            {
+                message = "Heqja e rolit dështoi.",
+                errors = removeResult.Errors.Select(e => e.Description).ToArray()
+            });
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+        return Results.Ok(new { user.Id, Roles = roles.ToList() });
     }
 }
