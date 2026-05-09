@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260509224451_ModuliPorosiFurnitor")]
+    partial class ModuliPorosiFurnitor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -334,49 +337,6 @@ namespace backend.Migrations
                     b.ToTable("Kategorite", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Data.Klient", b =>
-                {
-                    b.Property<Guid>("KlientId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Adresa")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("DataRegjistrimit")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Emri")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Mbiemri")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<int>("PiketBesnikerise")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Telefoni")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.HasKey("KlientId");
-
-                    b.HasIndex("DataRegjistrimit");
-
-                    b.HasIndex("Email");
-
-                    b.ToTable("Klientet", (string)null);
-                });
-
             modelBuilder.Entity("backend.Data.PorosiFurnitori", b =>
                 {
                     b.Property<Guid>("PorosiId")
@@ -459,51 +419,6 @@ namespace backend.Migrations
                     b.HasIndex("KategoriId");
 
                     b.ToTable("Produktet", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Data.Punetor", b =>
-                {
-                    b.Property<Guid>("PunetorId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("DataPunesimit")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Emri")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Mbiemri")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<decimal>("Paga")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Pozita")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("nvarchar(120)");
-
-                    b.Property<string>("Telefoni")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.HasKey("PunetorId");
-
-                    b.HasIndex("DataPunesimit");
-
-                    b.HasIndex("Email");
-
-                    b.ToTable("Punetoret", (string)null);
                 });
 
             modelBuilder.Entity("backend.Data.RefreshToken", b =>

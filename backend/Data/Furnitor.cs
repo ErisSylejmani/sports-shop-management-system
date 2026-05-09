@@ -17,4 +17,6 @@ public class Furnitor
     public string? Qyteti { get; set; }
 
     public string? Shteti { get; set; }
+
+    public ICollection<PorosiFurnitori> Porosite { get; set; } = new List<PorosiFurnitori>();
 }

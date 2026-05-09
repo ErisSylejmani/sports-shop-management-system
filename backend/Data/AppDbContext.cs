@@ -19,6 +19,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<Furnitor> Furnitoret => Set<Furnitor>();
 
+    public DbSet<PorosiFurnitori> PorositFurnitoreve => Set<PorosiFurnitori>();
+
+    public DbSet<DetajPorosieFurnitori> DetajetPorosiveFurnitor => Set<DetajPorosieFurnitori>();
+
+    public DbSet<Klient> Klientet => Set<Klient>();
+
+    public DbSet<Punetor> Punetoret => Set<Punetor>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -78,6 +86,79 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             entity.Property(e => e.Shteti).HasMaxLength(120);
 
             entity.HasIndex(e => e.Emri);
+        });
+
+        builder.Entity<PorosiFurnitori>(entity =>
+        {
+            entity.ToTable("PorositFurnitoreve");
+            entity.HasKey(e => e.PorosiId);
+
+            entity.Property(e => e.ShumaTotale).HasPrecision(18, 2);
+            entity.Property(e => e.Statusi).HasMaxLength(80).IsRequired();
+
+            entity
+                .HasOne(e => e.Furnitor)
+                .WithMany(f => f.Porosite)
+                .HasForeignKey(e => e.FurnitorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.FurnitorId);
+            entity.HasIndex(e => e.DataPorosise);
+        });
+
+        builder.Entity<DetajPorosieFurnitori>(entity =>
+        {
+            entity.ToTable("DetajetPorosiseFurnitorit");
+            entity.HasKey(e => e.DetajPorosiId);
+
+            entity.Property(e => e.CmimiNjesi).HasPrecision(18, 2);
+            entity.Property(e => e.CmimiTotal).HasPrecision(18, 2);
+
+            entity
+                .HasOne(e => e.Porosi)
+                .WithMany(p => p.Detajet)
+                .HasForeignKey(e => e.PorosiId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity
+                .HasOne(e => e.Produkt)
+                .WithMany(pr => pr.DetajetPorosiveFurnitor)
+                .HasForeignKey(e => e.ProduktId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.PorosiId);
+            entity.HasIndex(e => e.ProduktId);
+        });
+
+        builder.Entity<Klient>(entity =>
+        {
+            entity.ToTable("Klientet");
+            entity.HasKey(e => e.KlientId);
+
+            entity.Property(e => e.Emri).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Mbiemri).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Telefoni).HasMaxLength(30);
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.Adresa).HasMaxLength(500);
+
+            entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.DataRegjistrimit);
+        });
+
+        builder.Entity<Punetor>(entity =>
+        {
+            entity.ToTable("Punetoret");
+            entity.HasKey(e => e.PunetorId);
+
+            entity.Property(e => e.Emri).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Mbiemri).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Pozita).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.Telefoni).HasMaxLength(30);
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.Paga).HasPrecision(18, 2);
+
+            entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.DataPunesimit);
         });
 
         builder.Entity<RefreshToken>(entity =>

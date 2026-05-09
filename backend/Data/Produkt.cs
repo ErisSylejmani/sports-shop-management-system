@@ -23,4 +23,7 @@ public class Produkt
     public string? Ngjyra { get; set; }
 
     public Kategori Kategori { get; set; } = null!;
+
+    public ICollection<DetajPorosieFurnitori> DetajetPorosiveFurnitor { get; set; } =
+        new List<DetajPorosieFurnitori>();
 }
