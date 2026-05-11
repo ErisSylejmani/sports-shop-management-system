@@ -26,4 +26,6 @@ public class Produkt
 
     public ICollection<DetajPorosieFurnitori> DetajetPorosiveFurnitor { get; set; } =
         new List<DetajPorosieFurnitori>();
+
+    public ICollection<DetajShitje> DetajetShitje { get; set; } = new List<DetajShitje>();
 }

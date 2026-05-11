@@ -71,6 +71,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<AccessTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
+builder.Services.AddScoped<ShitjeService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -344,6 +345,7 @@ app.MapPost(
 
 app.MapAdminUsersEndpoints();
 app.MapAdminRolesEndpoints();
+app.MapShitjeEndpoints();
 
 await RoleSeeder.SeedDefaultRolesAsync(app.Services);
 

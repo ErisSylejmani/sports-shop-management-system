@@ -18,4 +18,6 @@ public class Punetor
     public DateTime DataPunesimit { get; set; }
 
     public decimal Paga { get; set; }
+
+    public ICollection<Shitje> Shitjet { get; set; } = new List<Shitje>();
 }

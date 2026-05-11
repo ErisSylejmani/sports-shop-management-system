@@ -18,4 +18,6 @@ public class Klient
     public DateTime DataRegjistrimit { get; set; }
 
     public int PiketBesnikerise { get; set; }
+
+    public ICollection<Shitje> Shitjet { get; set; } = new List<Shitje>();
 }

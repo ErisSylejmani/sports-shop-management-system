@@ -27,6 +27,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<Punetor> Punetoret => Set<Punetor>();
 
+    public DbSet<Shitje> Shitjet => Set<Shitje>();
+
+    public DbSet<DetajShitje> DetajetShitje => Set<DetajShitje>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -159,6 +163,56 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
             entity.HasIndex(e => e.Email);
             entity.HasIndex(e => e.DataPunesimit);
+        });
+
+        builder.Entity<Shitje>(entity =>
+        {
+            entity.ToTable("Shitjet");
+            entity.HasKey(e => e.ShitjeId);
+
+            entity.Property(e => e.ShumaTotale).HasPrecision(18, 2);
+            entity.Property(e => e.Zbritja).HasPrecision(18, 2);
+            entity.Property(e => e.MetodaPageses).HasMaxLength(80).IsRequired();
+
+            entity
+                .HasOne(e => e.Klient)
+                .WithMany(k => k.Shitjet)
+                .HasForeignKey(e => e.KlientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity
+                .HasOne(e => e.Punetor)
+                .WithMany(p => p.Shitjet)
+                .HasForeignKey(e => e.PunetorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.KlientId);
+            entity.HasIndex(e => e.PunetorId);
+            entity.HasIndex(e => e.DataShitjes);
+        });
+
+        builder.Entity<DetajShitje>(entity =>
+        {
+            entity.ToTable("DetajetShitjes");
+            entity.HasKey(e => e.DetajShitjeId);
+
+            entity.Property(e => e.CmimiNjesi).HasPrecision(18, 2);
+            entity.Property(e => e.CmimiTotal).HasPrecision(18, 2);
+
+            entity
+                .HasOne(e => e.Shitje)
+                .WithMany(s => s.Detajet)
+                .HasForeignKey(e => e.ShitjeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity
+                .HasOne(e => e.Produkt)
+                .WithMany(p => p.DetajetShitje)
+                .HasForeignKey(e => e.ProduktId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.ShitjeId);
+            entity.HasIndex(e => e.ProduktId);
         });
 
         builder.Entity<RefreshToken>(entity =>
