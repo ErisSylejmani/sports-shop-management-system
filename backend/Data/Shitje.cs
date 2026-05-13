@@ -22,4 +22,6 @@ public class Shitje
     public Punetor Punetor { get; set; } = null!;
 
     public ICollection<DetajShitje> Detajet { get; set; } = new List<DetajShitje>();
+
+    public ICollection<Kthim> Kthimet { get; set; } = new List<Kthim>();
 }

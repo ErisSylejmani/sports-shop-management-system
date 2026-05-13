@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513115722_ModuliKthime")]
+    partial class ModuliKthime
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -448,69 +451,6 @@ namespace backend.Migrations
                     b.ToTable("Kthimet", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Data.Oferta", b =>
-                {
-                    b.Property<Guid>("OfertaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("DataFillimit")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DataPerfundimit")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Emri")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<decimal>("PerqindjaZbritjes")
-                        .HasPrecision(6, 2)
-                        .HasColumnType("decimal(6,2)");
-
-                    b.Property<string>("Pershkrimi")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<string>("Statusi")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
-                    b.HasKey("OfertaId");
-
-                    b.HasIndex("DataFillimit");
-
-                    b.HasIndex("DataPerfundimit");
-
-                    b.ToTable("Ofertat", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Data.OferteProdukt", b =>
-                {
-                    b.Property<Guid>("OferteProduktId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("OfertaId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ProduktId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("OferteProduktId");
-
-                    b.HasIndex("OfertaId");
-
-                    b.HasIndex("ProduktId");
-
-                    b.HasIndex("OfertaId", "ProduktId")
-                        .IsUnique();
-
-                    b.ToTable("Oferte_Produkt", (string)null);
-                });
-
             modelBuilder.Entity("backend.Data.PorosiFurnitori", b =>
                 {
                     b.Property<Guid>("PorosiId")
@@ -829,25 +769,6 @@ namespace backend.Migrations
                     b.Navigation("Shitje");
                 });
 
-            modelBuilder.Entity("backend.Data.OferteProdukt", b =>
-                {
-                    b.HasOne("backend.Data.Oferta", "Oferta")
-                        .WithMany("OferteProdukte")
-                        .HasForeignKey("OfertaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Data.Produkt", "Produkt")
-                        .WithMany("OferteProdukte")
-                        .HasForeignKey("ProduktId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Oferta");
-
-                    b.Navigation("Produkt");
-                });
-
             modelBuilder.Entity("backend.Data.PorosiFurnitori", b =>
                 {
                     b.HasOne("backend.Data.Furnitor", "Furnitor")
@@ -922,11 +843,6 @@ namespace backend.Migrations
                     b.Navigation("Shitjet");
                 });
 
-            modelBuilder.Entity("backend.Data.Oferta", b =>
-                {
-                    b.Navigation("OferteProdukte");
-                });
-
             modelBuilder.Entity("backend.Data.PorosiFurnitori", b =>
                 {
                     b.Navigation("Detajet");
@@ -939,8 +855,6 @@ namespace backend.Migrations
                     b.Navigation("DetajetShitje");
 
                     b.Navigation("Kthimet");
-
-                    b.Navigation("OferteProdukte");
                 });
 
             modelBuilder.Entity("backend.Data.Punetor", b =>

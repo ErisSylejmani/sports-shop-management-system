@@ -28,4 +28,8 @@ public class Produkt
         new List<DetajPorosieFurnitori>();
 
     public ICollection<DetajShitje> DetajetShitje { get; set; } = new List<DetajShitje>();
+
+    public ICollection<Kthim> Kthimet { get; set; } = new List<Kthim>();
+
+    public ICollection<OferteProdukt> OferteProdukte { get; set; } = new List<OferteProdukt>();
 }

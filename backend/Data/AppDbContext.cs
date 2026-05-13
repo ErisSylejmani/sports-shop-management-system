@@ -31,6 +31,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<DetajShitje> DetajetShitje => Set<DetajShitje>();
 
+    public DbSet<Kthim> Kthimet => Set<Kthim>();
+
+    public DbSet<Oferta> Ofertat => Set<Oferta>();
+
+    public DbSet<OferteProdukt> OferteProdukte => Set<OferteProdukt>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -213,6 +219,67 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
             entity.HasIndex(e => e.ShitjeId);
             entity.HasIndex(e => e.ProduktId);
+        });
+
+        builder.Entity<Kthim>(entity =>
+        {
+            entity.ToTable("Kthimet");
+            entity.HasKey(e => e.KthimId);
+
+            entity.Property(e => e.Arsyeja).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Statusi).HasMaxLength(80).IsRequired();
+
+            entity
+                .HasOne(e => e.Shitje)
+                .WithMany(s => s.Kthimet)
+                .HasForeignKey(e => e.ShitjeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity
+                .HasOne(e => e.Produkt)
+                .WithMany(p => p.Kthimet)
+                .HasForeignKey(e => e.ProduktId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.ShitjeId);
+            entity.HasIndex(e => e.ProduktId);
+            entity.HasIndex(e => e.DataKthimit);
+        });
+
+        builder.Entity<Oferta>(entity =>
+        {
+            entity.ToTable("Ofertat");
+            entity.HasKey(e => e.OfertaId);
+
+            entity.Property(e => e.Emri).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Pershkrimi).HasMaxLength(4000);
+            entity.Property(e => e.PerqindjaZbritjes).HasPrecision(6, 2);
+            entity.Property(e => e.Statusi).HasMaxLength(80).IsRequired();
+
+            entity.HasIndex(e => e.DataFillimit);
+            entity.HasIndex(e => e.DataPerfundimit);
+        });
+
+        builder.Entity<OferteProdukt>(entity =>
+        {
+            entity.ToTable("Oferte_Produkt");
+            entity.HasKey(e => e.OferteProduktId);
+
+            entity
+                .HasOne(e => e.Oferta)
+                .WithMany(o => o.OferteProdukte)
+                .HasForeignKey(e => e.OfertaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity
+                .HasOne(e => e.Produkt)
+                .WithMany(p => p.OferteProdukte)
+                .HasForeignKey(e => e.ProduktId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.OfertaId);
+            entity.HasIndex(e => e.ProduktId);
+            entity.HasIndex(e => new { e.OfertaId, e.ProduktId }).IsUnique();
         });
 
         builder.Entity<RefreshToken>(entity =>
