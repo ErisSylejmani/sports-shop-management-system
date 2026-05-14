@@ -67,7 +67,23 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        KategoriEndpoints.KategoriShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        ProduktEndpoints.ProduktShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        FurnitorEndpoints.FurnitorShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+});
 
 builder.Services.AddSingleton<AccessTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
@@ -345,6 +361,9 @@ app.MapPost(
 
 app.MapAdminUsersEndpoints();
 app.MapAdminRolesEndpoints();
+app.MapKategoriteEndpoints();
+app.MapProdukteEndpoints();
+app.MapFurnitoreEndpoints();
 app.MapShitjeEndpoints();
 
 await RoleSeeder.SeedDefaultRolesAsync(app.Services);
