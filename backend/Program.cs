@@ -83,11 +83,27 @@ builder.Services.AddAuthorization(options =>
         FurnitorEndpoints.FurnitorShkrimPolicy,
         policy => policy.RequireAssertion(ctx =>
             ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        PorosiFurnitorEndpoints.PorosiFurnitorShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        KlientEndpoints.KlientShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        PunetorEndpoints.PunetorShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
 });
 
 builder.Services.AddSingleton<AccessTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<ShitjeService>();
+builder.Services.AddScoped<PorosiFurnitorService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -364,6 +380,9 @@ app.MapAdminRolesEndpoints();
 app.MapKategoriteEndpoints();
 app.MapProdukteEndpoints();
 app.MapFurnitoreEndpoints();
+app.MapPorosiFurnitoreEndpoints();
+app.MapKlientetEndpoints();
+app.MapPunetoretEndpoints();
 app.MapShitjeEndpoints();
 
 await RoleSeeder.SeedDefaultRolesAsync(app.Services);
