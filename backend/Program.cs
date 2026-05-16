@@ -98,6 +98,11 @@ builder.Services.AddAuthorization(options =>
         PunetorEndpoints.PunetorShkrimPolicy,
         policy => policy.RequireAssertion(ctx =>
             ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        ShitjeEndpoints.ShitjeShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
 });
 
 builder.Services.AddSingleton<AccessTokenService>();
