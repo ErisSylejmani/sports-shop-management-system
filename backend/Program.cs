@@ -103,12 +103,24 @@ builder.Services.AddAuthorization(options =>
         ShitjeEndpoints.ShitjeShkrimPolicy,
         policy => policy.RequireAssertion(ctx =>
             ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        KthimEndpoints.KthimShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+
+    options.AddPolicy(
+        OfertaEndpoints.OfertaShkrimPolicy,
+        policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
 });
 
 builder.Services.AddSingleton<AccessTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<ShitjeService>();
 builder.Services.AddScoped<PorosiFurnitorService>();
+builder.Services.AddScoped<KthimService>();
+builder.Services.AddScoped<OfertaService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -389,6 +401,8 @@ app.MapPorosiFurnitoreEndpoints();
 app.MapKlientetEndpoints();
 app.MapPunetoretEndpoints();
 app.MapShitjeEndpoints();
+app.MapKthimetEndpoints();
+app.MapOfertatEndpoints();
 
 await RoleSeeder.SeedDefaultRolesAsync(app.Services);
 
