@@ -1,11 +1,32 @@
-# sports-shop-management-system
-Sistem per Menaxhimin e Nje Dyqani Sportiv
-Keto jane kerkesat:
-5. Siguria Implementimi i JWT ose teknikave te tjera te autentifikimit duhet te konsiderohet per te siguruar qasjen ne API ose pjeset e mbrojtura te aplikacionit. 6. Kriteret e Pranueshmmerise • Sistemi duhet te funksionoje pa probleme ne shfletuesit kryesore (Chrome, Firefox, Safari, Brave, Edge). • Duhet te kete dokumentacion te qarte per API-ne dhe per perdorimin e aplikacionit. • Performanca e aplikacionit duhet te jete e mire. • Sistemi duhet te jete i sigurt dhe te mbroje te dhenat e perdoruesve nga akseset e paautorizuara. • Cdo projekt duhet te implementoje Dashboard (obligative). 
+# Sports Shop Management System
 
-Teknologjite qe do te perdor jane: ReactJS + TailWindCSS per Front End. .NET web API dhe MSSQL per BackEnd.
+Sistem për menaxhimin e një dyqani sportiv: inventar, shitje, furnitorë, klientë, kthime dhe oferta.
 
-• Entitetet, lidhjet dhe format CRUD te listuara me poshte jane MINIMALE. Studentet duhet te shtojne edhe forma te tjera CRUD sipas nevojes se projektit per ta bere sistemin sa me te plote. • Secili projekt DUHET te implementoje sistemin e identitetit (Authentication & Authorization) me tabelat e meposhtme qe jane te perbashketa per te gjitha projektet: Sistemi i Identitetit (i perbashket per te gjitha projektet - bazuar ne .NET Identity): Tabelat e Identitetit: • Users (id, emri, mbiemri, email, password_hash, phone_number, email_confirmed, lockout_enabled, access_failed_count, data_krijimit, statusi) • Roles (id, emertimi, pershkrimi, normalized_name) • UserRoles (id, user_id, role_id) - Tabela ndermjetese Many-to-Many • UserClaims (id, user_id, claim_type, claim_value) • UserTokens (id, user_id, login_provider, token_name, token_value) • RefreshTokens (id, user_id, token, expires, created, revoked) Lidhjet e Identitetit: • UserRoles -> Users (Many-to-One): Nje perdorues ka shume role • UserRoles -> Roles (Many-to-One): Nje rol caktohet te shume perdorues (Many-to-Many) • UserClaims -> Users (Many-to-One): Nje perdorues ka shume claims • UserTokens -> Users (Many-to-One): Nje perdorues ka shume tokena • RefreshTokens -> Users (Many-to-One): Nje perdorues ka shume refresh tokena Format CRUD te Identitetit (te detyrueshme per secilin projekt): • CRUD per Perdorues (regjistrim, lexim, modifikim, fshirje, aktivizim/deaktivizim) • CRUD per Role (krijim, lexim, modifikim, fshirje) • CRUD per Caktimin e Roleve te Perdoruesve (UserRoles) • Forma e Login dhe Regjistrimit (me JWT autentifikim) • Menaxhimi i Refresh Tokenave Shembull i roleve per secilin projekt: • Admin - ka qasje te plote ne sistem • Manager/Menaxher - menaxhon operacionet kryesore • User/Perdorues - qasje e kufizuar sipas projektit 
+| **Backend** | .NET Web API, EF Core, MSSQL, JWT | **[backend/README.md](backend/README.md)** — nisja, secrets, migrime, Swagger |
+| **Frontend** | React, Tailwind CSS | *(në zhvillim)* |
 
-79. Sistem per Menaxhimin e Dyqanit te Sportit 
-Sistem per menaxhimin e dyqanit te pajisjeve sportive, duke perfshire inventarin, shitjet, furnitoret dhe kategorite e produkteve. Entitetet shtese (pervec tabelave te Identitetit): • Produktet (produkt_id (PK), emri, pershkrimi, kategoria_id (FK), marka, cmimi_blerjes, cmimi_shitjes, sasia_stok, madhesia, ngjyra) • Kategorite (kategori_id (PK), emri, pershkrimi, kategoria_prind_id (FK)) • Furnitoret (furnitor_id (PK), emri, personi_kontaktit, telefoni, email, adresa, qyteti, shteti) • Porositë_Furnitoreve (porosi_id (PK), furnitor_id (FK), data_porosise, data_pritshme, shuma_totale, statusi) • Detajet_Porosise_Furnitorit (detal_id (PK), porosi_id (FK), produkt_id (FK), sasia, cmimi_njesi, cmimi_total) • Klientet (klient_id (PK), emri, mbiemri, telefoni, email, adresa, data_regjistrimit, piket_besnikerise) • Shitjet (shitje_id (PK), klient_id (FK), punetor_id (FK), data_shitjes, shuma_totale, zbritja, metoda_pageses) • Detajet_Shitjes (detal_id (PK), shitje_id (FK), produkt_id (FK), sasia, cmimi_njesi, cmimi_total) • Punetoret (punetor_id (PK), emri, mbiemri, pozita, telefoni, email, data_punesimit, paga) • Kthimet (kthim_id (PK), shitje_id (FK), produkt_id (FK), sasia, arsyeja, data_kthimit, statusi) • Ofertat (oferte_id (PK), emri, pershkrimi, perqindja_zbritjes, data_fillimit, data_perfundimit, statusi) • Oferte_Produkt (op_id (PK), oferte_id (FK), produkt_id (FK)) Lidhjet ndermjet tabelave: • Kategorite 1:N Produktet • Furnitoret 1:N Porositë_Furnitoreve • Porositë_Furnitoreve 1:N Detajet_Porosise_Furnitorit • Produktet 1:N Detajet_Porosise_Furnitorit • Klientet 1:N Shitjet • Punetoret 1:N Shitjet • Shitjet 1:N Detajet_Shitjes • Produktet 1:N Detajet_Shitjes • Shitjet 1:N Kthimet • Produktet 1:N Kthimet • Ofertat 1:N Oferte_Produkt • Produktet 1:N Oferte_Produkt Format CRUD (minimumi - pervec formave te Identitetit): • CRUD per Produktet • CRUD per Kategorite • CRUD per Furnitoret • CRUD per Porosite e Furnitoreve • CRUD per Klientet • CRUD per Shitjet • CRUD per Detajet e Shitjes • CRUD per Punetoret • CRUD per Kthimet • CRUD per Ofertat
+## Fillim i shpejtë (backend)
+
+```bash
+cd backend
+dotnet user-secrets set "Jwt:SigningKey" "<çelës-i-gjatë-min-32-karaktere>" --project backend
+dotnet ef database update --project backend
+dotnet run --project backend
+```
+
+Hapni Swagger: http://localhost:5079/swagger
+
+## Kërkesat e lëndës (përmbledhje)
+
+- Autentifikim **JWT**, role **Admin / Manager / User**
+- CRUD për produkte, kategori, furnitorë, porosi furnitori, klientë, punëtorë, shitje (me detaje), kthime, oferta
+- **Dashboard** në frontend (obligativ)
+- Dokumentacion i qartë API dhe përdorimi
+
+Lista e plotë e entiteteve dhe kërkesave të detyrueshme të identitetit është në seksionin historik të projektit universitar; implementimi aktual i API-s përputhet me modulet e listuara në [backend/README.md](backend/README.md).
+
+## Ekipi
+
+- Pas `git pull`: `dotnet ef database update --project backend` nëse ka migrime të reja
+- Të dhënat (produkte, klientë) **nuk** vijnë me Git — përdorni databazë të përbashkët ose seed / API
+- Mos commit-oni fjalëkalime; përdorni **User Secrets** për JWT dhe connection string prod

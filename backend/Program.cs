@@ -115,6 +115,26 @@ builder.Services.AddAuthorization(options =>
             ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
 });
 
+const string frontendCorsPolicy = "Frontend";
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var corsOriginsNormalized = corsOrigins
+    .Where(o => !string.IsNullOrWhiteSpace(o))
+    .Select(o => o.Trim().TrimEnd('/'))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
+if (corsOriginsNormalized.Length > 0)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(frontendCorsPolicy, policy =>
+            policy
+                .WithOrigins(corsOriginsNormalized)
+                .AllowAnyHeader()
+                .AllowAnyMethod());
+    });
+}
+
 builder.Services.AddSingleton<AccessTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<ShitjeService>();
@@ -154,6 +174,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+if (corsOriginsNormalized.Length > 0)
+    app.UseCors(frontendCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
