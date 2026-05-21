@@ -1,1 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --accent: #2563eb;
+  --accent-ring: #3b82f6;
+}
+
+html.theme-admin {
+  --accent: #2563eb;
+  --accent-ring: #3b82f6;
+}
+
+html.theme-manager {
+  --accent: #0284c7;
+  --accent-ring: #0ea5e9;
+}
+
+html.theme-staff {
+  --accent: #059669;
+  --accent-ring: #10b981;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background: #f1f5f9;
+}
+
+#root {
+  min-height: 100vh;
+}
