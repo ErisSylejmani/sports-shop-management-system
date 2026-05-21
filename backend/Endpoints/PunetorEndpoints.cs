@@ -1,5 +1,7 @@
 using backend.Contracts.Punetor;
 using backend.Data;
+using backend.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Endpoints;
@@ -23,20 +25,22 @@ public static class PunetorEndpoints
 
     private static async Task<IResult> ListAsync(AppDbContext db)
     {
-        var items = await db.Punetoret
+        var userIdsByPunetor = await db.Users
+            .AsNoTracking()
+            .Where(u => u.PunetorId != null)
+            .ToDictionaryAsync(u => u.PunetorId!.Value, u => u.Id);
+
+        var punetoret = await db.Punetoret
             .AsNoTracking()
             .OrderBy(p => p.Mbiemri)
             .ThenBy(p => p.Emri)
-            .Select(p => new PunetorResponse(
-                p.PunetorId,
-                p.Emri,
-                p.Mbiemri,
-                p.Pozita,
-                p.Telefoni,
-                p.Email,
-                p.DataPunesimit,
-                p.Paga))
             .ToListAsync();
+
+        var items = punetoret
+            .Select(p => PunetorService.ToResponse(
+                p,
+                userIdsByPunetor.GetValueOrDefault(p.PunetorId)))
+            .ToList();
 
         return Results.Ok(items);
     }
@@ -47,31 +51,25 @@ public static class PunetorEndpoints
         if (p is null)
             return Results.NotFound(new { message = "Punëtori nuk u gjet." });
 
-        return Results.Ok(ToResponse(p));
+        var userId = await db.Users
+            .AsNoTracking()
+            .Where(u => u.PunetorId == id)
+            .Select(u => (Guid?)u.Id)
+            .FirstOrDefaultAsync();
+
+        return Results.Ok(PunetorService.ToResponse(p, userId));
     }
 
-    private static async Task<IResult> CreateAsync(CreatePunetorRequest body, AppDbContext db)
+    private static async Task<IResult> CreateAsync(
+        CreatePunetorRequest body,
+        PunetorService service,
+        CancellationToken cancellationToken)
     {
-        var validation = ValidateBody(body.Emri, body.Mbiemri, body.Pozita, body.Paga);
-        if (validation is not null)
-            return Results.BadRequest(new { message = validation });
+        var (response, error, statusCode) = await service.CreateWithLoginAsync(body, cancellationToken);
+        if (response is null)
+            return Results.Json(new { message = error }, statusCode: statusCode);
 
-        var entity = new Punetor
-        {
-            PunetorId = Guid.NewGuid(),
-            Emri = body.Emri.Trim(),
-            Mbiemri = body.Mbiemri.Trim(),
-            Pozita = body.Pozita.Trim(),
-            Telefoni = TrimOrNull(body.Telefoni),
-            Email = TrimOrNull(body.Email),
-            DataPunesimit = body.DataPunesimit ?? DateTime.UtcNow,
-            Paga = body.Paga
-        };
-
-        db.Punetoret.Add(entity);
-        await db.SaveChangesAsync();
-
-        return Results.Created($"/api/punetoret/{entity.PunetorId}", ToResponse(entity));
+        return Results.Created($"/api/punetoret/{response.PunetorId}", response);
     }
 
     private static async Task<IResult> UpdateAsync(Guid id, UpdatePunetorRequest body, AppDbContext db)
@@ -92,12 +90,20 @@ public static class PunetorEndpoints
         entity.DataPunesimit = body.DataPunesimit;
         entity.Paga = body.Paga;
 
+        var linkedUser = await db.Users.FirstOrDefaultAsync(u => u.PunetorId == id);
+        if (linkedUser is not null)
+        {
+            linkedUser.Emri = entity.Emri;
+            linkedUser.Mbiemri = entity.Mbiemri;
+            linkedUser.PhoneNumber = entity.Telefoni;
+        }
+
         await db.SaveChangesAsync();
 
-        return Results.Ok(ToResponse(entity));
+        return Results.Ok(PunetorService.ToResponse(entity, linkedUser?.Id));
     }
 
-    private static async Task<IResult> DeleteAsync(Guid id, AppDbContext db)
+    private static async Task<IResult> DeleteAsync(Guid id, AppDbContext db, UserManager<ApplicationUser> userManager)
     {
         var entity = await db.Punetoret.FirstOrDefaultAsync(p => p.PunetorId == id);
         if (entity is null)
@@ -105,6 +111,14 @@ public static class PunetorEndpoints
 
         if (await db.Shitjet.AnyAsync(s => s.PunetorId == id))
             return Results.Conflict(new { message = "Nuk mund të fshihet: ka shitje të lidhura." });
+
+        var linkedUser = await db.Users.FirstOrDefaultAsync(u => u.PunetorId == id);
+        if (linkedUser is not null)
+        {
+            var deleteUser = await userManager.DeleteAsync(linkedUser);
+            if (!deleteUser.Succeeded)
+                return Results.BadRequest(new { message = "Nuk mund të fshihet punëtori: fshirja e llogarisë dështoi." });
+        }
 
         db.Punetoret.Remove(entity);
         await db.SaveChangesAsync();
@@ -124,17 +138,6 @@ public static class PunetorEndpoints
             return "Paga nuk mund të jetë negative.";
         return null;
     }
-
-    private static PunetorResponse ToResponse(Punetor p) =>
-        new(
-            p.PunetorId,
-            p.Emri,
-            p.Mbiemri,
-            p.Pozita,
-            p.Telefoni,
-            p.Email,
-            p.DataPunesimit,
-            p.Paga);
 
     private static string? TrimOrNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

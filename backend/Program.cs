@@ -102,12 +102,16 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(
         ShitjeEndpoints.ShitjeShkrimPolicy,
         policy => policy.RequireAssertion(ctx =>
-            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+            ctx.User.IsInRole("Admin")
+            || ctx.User.IsInRole("Manager")
+            || ctx.User.IsInRole("User")));
 
     options.AddPolicy(
         KthimEndpoints.KthimShkrimPolicy,
         policy => policy.RequireAssertion(ctx =>
-            ctx.User.IsInRole("Admin") || ctx.User.IsInRole("Manager")));
+            ctx.User.IsInRole("Admin")
+            || ctx.User.IsInRole("Manager")
+            || ctx.User.IsInRole("User")));
 
     options.AddPolicy(
         OfertaEndpoints.OfertaShkrimPolicy,
@@ -141,6 +145,7 @@ builder.Services.AddScoped<ShitjeService>();
 builder.Services.AddScoped<PorosiFurnitorService>();
 builder.Services.AddScoped<KthimService>();
 builder.Services.AddScoped<OfertaService>();
+builder.Services.AddScoped<PunetorService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -192,6 +197,18 @@ app.MapGet(
                 return Results.Unauthorized();
 
             var roles = await userManager.GetRolesAsync(user);
+            string? punetorEmri = null;
+            if (user.PunetorId is not null)
+            {
+                punetorEmri = await httpContext.RequestServices
+                    .GetRequiredService<AppDbContext>()
+                    .Punetoret
+                    .AsNoTracking()
+                    .Where(p => p.PunetorId == user.PunetorId)
+                    .Select(p => p.Emri + " " + p.Mbiemri)
+                    .FirstOrDefaultAsync();
+            }
+
             return Results.Ok(new
             {
                 user.Id,
@@ -200,7 +217,10 @@ app.MapGet(
                 user.Mbiemri,
                 user.PhoneNumber,
                 user.EshteAktiv,
-                Roles = roles
+                user.PunetorId,
+                PunetorEmri = punetorEmri?.Trim(),
+                Roles = roles,
+                IsStaff = roles.Contains("User") && !roles.Contains("Manager") && !roles.Contains("Admin")
             });
         })
     .RequireAuthorization()

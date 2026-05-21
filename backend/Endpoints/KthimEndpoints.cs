@@ -1,6 +1,7 @@
 using backend.Contracts.Kthim;
 using backend.Data;
 using backend.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Endpoints;
@@ -80,8 +81,16 @@ public static class KthimEndpoints
         Guid id,
         UpdateKthimRequest body,
         KthimService service,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "ndryshojë kthimin");
+        if (forbidden is not null)
+            return forbidden;
+
         var (response, error, statusCode) = await service.UpdateAsync(id, body, cancellationToken);
         if (response is null)
             return Results.Json(new { message = error }, statusCode: statusCode);
@@ -92,8 +101,16 @@ public static class KthimEndpoints
     private static async Task<IResult> DeleteAsync(
         Guid id,
         KthimService service,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "fshijë kthimin");
+        if (forbidden is not null)
+            return forbidden;
+
         var (success, error, statusCode) = await service.DeleteAsync(id, cancellationToken);
         if (!success)
             return Results.Json(new { message = error }, statusCode: statusCode);

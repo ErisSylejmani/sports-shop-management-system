@@ -8,4 +8,5 @@ public sealed record PunetorResponse(
     string? Telefoni,
     string? Email,
     DateTime DataPunesimit,
-    decimal Paga);
+    decimal Paga,
+    Guid? UserId);

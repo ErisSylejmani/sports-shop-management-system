@@ -5,6 +5,7 @@ public sealed record CreatePunetorRequest(
     string Mbiemri,
     string Pozita,
     string? Telefoni,
-    string? Email,
+    string Email,
+    string Password,
     DateTime? DataPunesimit,
     decimal Paga);

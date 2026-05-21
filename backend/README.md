@@ -140,9 +140,30 @@ Ose përdorni `POST /api/admin/users` pasi të keni një Admin tjetër.
 |-----|-------------------------|
 | **Admin** | Përdoruesit, rolet, caktimi i roleve; gjithashtu shkrim si Manager |
 | **Manager** | CRUD shkrim për katalog, shitje, klientë, furnitorë, etj. |
-| **User** | Lexim i shumicës së resurseve (sipas endpoint-it) |
+| **User** | **Staf i dyqanit** (shitës/kasier): regjistron **shitje** dhe **kthime**, lexon të dhëna; nuk ndryshon/fshin shitje ose katalog |
 
-Shkrimi për modulet e biznesit përdor politika `*Shkrim` (Admin **ose** Manager).
+Shkrimi për katalog/furnitorë/oferta përdor politika `*Shkrim` (Admin **ose** Manager). Shitje dhe kthime: Admin, Manager **ose** User (staf).
+
+### Staf: punëtor + llogari login
+
+`POST /api/punetoret` (Admin ose Manager) krijon **punëtorin** dhe **llogarinë** me rol `User`:
+
+```json
+{
+  "emri": "Ana",
+  "mbiemri": "Gashi",
+  "pozita": "Shitese",
+  "telefoni": "044123456",
+  "email": "ana.gashi@dyqan.com",
+  "password": "Fjalekalimi123!",
+  "dataPunesimit": null,
+  "paga": 450
+}
+```
+
+Stafi logohet me `POST /api/auth/login`. `GET /api/me` kthen `punetorId`, `isStaff`. Në shitje, stafi regjistrohet automatikisht me `punetorId` të vet — nuk mund të zgjedhë punëtor tjetër.
+
+Ekzekutoni migrimin `LinkApplicationUserPunetor` pas pull: `dotnet ef database update --project backend`.
 
 ## Modulet e API-s (CRUD)
 

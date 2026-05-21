@@ -1,6 +1,7 @@
 using backend.Contracts.Shitje;
 using backend.Data;
 using backend.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Endpoints;
@@ -19,22 +20,7 @@ public static class ShitjeEndpoints
         group.MapPut("{id:guid}", UpdateAsync).RequireAuthorization(ShitjeShkrimPolicy);
         group.MapDelete("{id:guid}", DeleteAsync).RequireAuthorization(ShitjeShkrimPolicy);
 
-        group.MapPost(
-                "/konfirmo",
-                async Task<IResult> (
-                    KonfirmoShitjeRequest body,
-                    ShitjeService shitjeService,
-                    CancellationToken cancellationToken) =>
-                {
-                    var (response, error, statusCode) =
-                        await shitjeService.KonfirmoShitjeAsync(body, cancellationToken);
-
-                    if (response is null)
-                        return Results.Json(new { message = error }, statusCode: statusCode);
-
-                    return Results.Created($"/api/shitjet/{response.ShitjeId}", response);
-                })
-            .RequireAuthorization(ShitjeShkrimPolicy);
+        group.MapPost("/konfirmo", KonfirmoAsync).RequireAuthorization(ShitjeShkrimPolicy);
 
         var detajGroup = group.MapGroup("/{shitjeId:guid}/detajet");
 
@@ -93,9 +79,47 @@ public static class ShitjeEndpoints
     private static async Task<IResult> CreateAsync(
         CreateShitjeRequest body,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, punetorId, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+
+        var staffError = StaffAccessHelper.ValidateStaffCanWriteSale(isStaffOnly, punetorId);
+        if (staffError is not null)
+            return Results.Json(new { message = staffError }, statusCode: StatusCodes.Status403Forbidden);
+
+        if (isStaffOnly && punetorId is not null)
+            body = StaffAccessHelper.ApplyStaffPunetorForCreate(body, punetorId.Value).Request;
+
         var (response, error, statusCode) = await shitjeService.CreateAsync(body, cancellationToken);
+        if (response is null)
+            return Results.Json(new { message = error }, statusCode: statusCode);
+
+        return Results.Created($"/api/shitjet/{response.ShitjeId}", response);
+    }
+
+    private static async Task<IResult> KonfirmoAsync(
+        KonfirmoShitjeRequest body,
+        ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        CancellationToken cancellationToken)
+    {
+        var (_, punetorId, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+
+        var staffError = StaffAccessHelper.ValidateStaffCanWriteSale(isStaffOnly, punetorId);
+        if (staffError is not null)
+            return Results.Json(new { message = staffError }, statusCode: StatusCodes.Status403Forbidden);
+
+        if (isStaffOnly && punetorId is not null)
+            body = StaffAccessHelper.ApplyStaffPunetorForKonfirmo(body, punetorId.Value).Request;
+
+        var (response, error, statusCode) =
+            await shitjeService.KonfirmoShitjeAsync(body, cancellationToken);
+
         if (response is null)
             return Results.Json(new { message = error }, statusCode: statusCode);
 
@@ -106,8 +130,16 @@ public static class ShitjeEndpoints
         Guid id,
         UpdateShitjeRequest body,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "ndryshojë shitjen");
+        if (forbidden is not null)
+            return forbidden;
+
         var (response, error, statusCode) = await shitjeService.UpdateAsync(id, body, cancellationToken);
         if (response is null)
             return Results.Json(new { message = error }, statusCode: statusCode);
@@ -118,8 +150,16 @@ public static class ShitjeEndpoints
     private static async Task<IResult> DeleteAsync(
         Guid id,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "fshijë shitjen");
+        if (forbidden is not null)
+            return forbidden;
+
         var (success, error, statusCode) = await shitjeService.DeleteAsync(id, cancellationToken);
         if (!success)
             return Results.Json(new { message = error }, statusCode: statusCode);
@@ -156,8 +196,16 @@ public static class ShitjeEndpoints
         Guid shitjeId,
         AddDetajShitjeRequest body,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "ndryshojë detajet e shitjes");
+        if (forbidden is not null)
+            return forbidden;
+
         var (response, error, statusCode) = await shitjeService.AddDetajAsync(shitjeId, body, cancellationToken);
         if (response is null)
             return Results.Json(new { message = error }, statusCode: statusCode);
@@ -170,8 +218,16 @@ public static class ShitjeEndpoints
         Guid detajId,
         UpdateDetajShitjeRequest body,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "ndryshojë detajet e shitjes");
+        if (forbidden is not null)
+            return forbidden;
+
         var (response, error, statusCode) = await shitjeService.UpdateDetajAsync(shitjeId, detajId, body, cancellationToken);
         if (response is null)
             return Results.Json(new { message = error }, statusCode: statusCode);
@@ -183,8 +239,16 @@ public static class ShitjeEndpoints
         Guid shitjeId,
         Guid detajId,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "ndryshojë detajet e shitjes");
+        if (forbidden is not null)
+            return forbidden;
+
         var (success, error, statusCode) = await shitjeService.DeleteDetajAsync(shitjeId, detajId, cancellationToken);
         if (!success)
             return Results.Json(new { message = error }, statusCode: statusCode);
@@ -196,8 +260,16 @@ public static class ShitjeEndpoints
         Guid shitjeId,
         ReplaceShitjeDetajetRequest body,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, _, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+        var forbidden = StaffAccessHelper.ForbidStaffMutation(isStaffOnly, "ndryshojë detajet e shitjes");
+        if (forbidden is not null)
+            return forbidden;
+
         var (response, error, statusCode) = await shitjeService.ReplaceDetajetAsync(shitjeId, body, cancellationToken);
         if (response is null)
             return Results.Json(new { message = error }, statusCode: statusCode);

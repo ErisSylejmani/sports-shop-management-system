@@ -171,6 +171,17 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             entity.HasIndex(e => e.DataPunesimit);
         });
 
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity
+                .HasOne(e => e.Punetor)
+                .WithOne()
+                .HasForeignKey<ApplicationUser>(e => e.PunetorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.PunetorId).IsUnique().HasFilter("[PunetorId] IS NOT NULL");
+        });
+
         builder.Entity<Shitje>(entity =>
         {
             entity.ToTable("Shitjet");
