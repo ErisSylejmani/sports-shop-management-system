@@ -19,12 +19,19 @@ Hapni http://localhost:5173 (ose portin që tregon Vite). Sigurohuni që backend
 - **API client:** `src/api/client.ts` (JWT nga `localStorage`)
 - **Tema sipas rolit:** Admin/Menaxher = **blu**, Staf (User) = **jeshil**
 
-## F1 — Auth
+## F1 — Auth (e përfunduar)
 
-- **Login:** `POST /api/auth/login` → token në `localStorage`
-- **Profili:** `GET /api/me` → `roles`, `punetorId`, `isStaff`, `punetorEmri`
-- **Rrugë të mbrojtura:** pa token → `/login`; i loguar në `/login` → `/`
-- **Logout:** butoni «Dil» + `POST /api/auth/logout`
+| Kërkesa | Status |
+|---------|--------|
+| Login → `POST /api/auth/login`, token në localStorage | ✅ |
+| `GET /api/me` → roles, punetorId, isStaff | ✅ |
+| `ProtectedRoute` → `/login` pa token | ✅ |
+| `RoleBasedHome` → dashboard për të gjithë rolet | ✅ |
+| Logout → hiq token, `/login` | ✅ |
+| AppLayout → emri nga `/api/me`, butoni Dil | ✅ |
+| `api/client.ts` → `Authorization: Bearer` | ✅ |
+
+Commit: `feat(frontend): F1 login dhe rrugë të mbrojtura`
 
 ## Struktura
 

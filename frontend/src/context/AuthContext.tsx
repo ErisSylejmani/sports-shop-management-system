@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { fetchMe, login as apiLogin, logout as apiLogout } from '../api/auth'
 import { ApiError, setUnauthorizedHandler } from '../api/client'
 import type { AuthUser } from '../auth/types'
+import { getHomePath } from '../auth/home'
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../auth/token'
 
 type AuthContextValue = {
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTokens(res.accessToken, res.refreshToken)
       const me = await fetchMe()
       setUser(me)
-      navigate('/', { replace: true })
+      navigate(getHomePath(me.roles, me.isStaff), { replace: true })
     },
     [navigate],
   )

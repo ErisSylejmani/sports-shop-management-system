@@ -6,7 +6,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { AuthProvider } from './context/AuthContext'
 import { RoleThemeProvider } from './context/RoleThemeContext'
 import { LoginPage } from './pages/LoginPage'
-import { DashboardPage } from './pages/DashboardPage'
+import { RoleBasedHome } from './components/auth/RoleBasedHome'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
@@ -23,7 +23,7 @@ export default function App() {
 
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route index element={<DashboardPage />} />
+                <Route index element={<RoleBasedHome />} />
                 <Route path="kategorite" element={<PlaceholderPage title="Kategoritë" />} />
                 <Route path="produkte" element={<PlaceholderPage title="Produktet" />} />
                 <Route path="klientet" element={<PlaceholderPage title="Klientët" />} />
