@@ -1,15 +1,38 @@
-import { Link } from 'react-router-dom'
+import { useState, type FormEvent } from 'react'
 import { Dumbbell, Lock, Mail } from 'lucide-react'
+import { ApiError } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { useAuth } from '../context/AuthContext'
 
-/** Faqe hyrje — stil Sportix (blu e errët); login funksional në F1. */
 export function LoginPage() {
+  const { login } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    try {
+      await login(email, password)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Nuk u arrit lidhja me serverin. Kontrolloni që API është aktiv.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950">
       <div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-10 bottom-10 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute left-1/3 top-1/2 h-40 w-40 rounded-full border border-white/5 opacity-30" />
 
       <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-12">
         <div className="mb-8 flex items-center gap-3">
@@ -28,38 +51,47 @@ export function LoginPage() {
             Hyni në llogarinë tuaj për të vazhduar.
           </p>
 
-          <form className="mt-8 space-y-5" onSubmit={(e) => e.preventDefault()}>
+          <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             <Input
               label="Email"
+              labelClassName="text-slate-300"
               type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="email@shembull.com"
               icon={<Mail className="h-4 w-4" />}
-              className="border-slate-700 bg-slate-800/80 text-white"
+              className="border-slate-700 bg-slate-800/80 text-white placeholder:text-slate-500"
             />
             <Input
               label="Fjalëkalimi"
+              labelClassName="text-slate-300"
               type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               icon={<Lock className="h-4 w-4" />}
-              className="border-slate-700 bg-slate-800/80 text-white"
+              className="border-slate-700 bg-slate-800/80 text-white placeholder:text-slate-500"
             />
 
-            <div className="flex justify-end">
-              <button type="button" className="text-sm text-blue-400 hover:text-blue-300">
-                Keni harruar fjalëkalimin?
-              </button>
-            </div>
+            {error && (
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {error}
+              </p>
+            )}
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500" variant="primary">
-              Hyr
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60"
+              variant="primary"
+            >
+              {loading ? 'Duke u futur...' : 'Hyr'}
             </Button>
           </form>
-
-          <p className="mt-6 text-center text-sm text-slate-500">
-            <Link to="/" className="font-medium text-blue-400 hover:text-blue-300">
-              Vazhdo te dashboard (preview F0)
-            </Link>
-          </p>
         </div>
 
         <p className="mt-8 text-xs text-slate-500">© Sports Shop. Të gjitha të drejtat e rezervuara.</p>

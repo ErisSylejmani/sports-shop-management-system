@@ -1,12 +1,16 @@
 import { Outlet } from 'react-router-dom'
-import { Bell, Search, UserCircle } from 'lucide-react'
+import { Bell, LogOut, Search, UserCircle } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { Sidebar } from './Sidebar'
+import { useAuth } from '../../context/AuthContext'
 import { useRoleTheme } from '../../context/RoleThemeContext'
-import { roleLabel, setPreviewRole, type AppRole } from '../../auth/roles'
+import { roleLabel } from '../../auth/roles'
 
 export function AppLayout() {
-  const { role, theme, setRole } = useRoleTheme()
+  const { user, logout } = useAuth()
+  const { role, theme } = useRoleTheme()
+
+  const displayName = user ? `${user.emri} ${user.mbiemri}`.trim() : 'Përdoruesi'
 
   return (
     <div className="flex min-h-screen bg-slate-100">
@@ -33,22 +37,6 @@ export function AppLayout() {
               {roleLabel(role)}
             </span>
 
-            {/* F0: ndërrim teme për preview — zëvendësohet nga /api/me në F1 */}
-            <select
-              value={role}
-              onChange={(e) => {
-                const r = e.target.value as AppRole
-                setRole(r)
-                setPreviewRole(r)
-              }}
-              className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs text-white"
-              title="Preview roli (F0)"
-            >
-              <option value="admin">Admin (blu)</option>
-              <option value="manager">Menaxher (blu)</option>
-              <option value="staff">Staf (gjelbër)</option>
-            </select>
-
             <button
               type="button"
               className="rounded-xl p-2 text-white/80 transition hover:bg-white/10"
@@ -59,8 +47,17 @@ export function AppLayout() {
 
             <div className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2">
               <UserCircle className="h-8 w-8 text-white/90" />
-              <span className="hidden text-sm font-medium sm:inline">Përdoruesi</span>
+              <span className="hidden max-w-[140px] truncate text-sm font-medium sm:inline">{displayName}</span>
             </div>
+
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Dil</span>
+            </button>
           </div>
         </header>
 

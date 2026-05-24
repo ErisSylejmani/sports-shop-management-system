@@ -3,16 +3,20 @@ import { cn } from '../../lib/cn'
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
   label?: string
+  labelClassName?: string
   error?: string
   icon?: ReactNode
 }
 
-export function Input({ label, error, icon, className, id, ...props }: Props) {
+export function Input({ label, labelClassName, error, icon, className, id, ...props }: Props) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-600">
+        <label
+          htmlFor={inputId}
+          className={cn('mb-1.5 block text-sm font-medium text-slate-600', labelClassName)}
+        >
           {label}
         </label>
       )}

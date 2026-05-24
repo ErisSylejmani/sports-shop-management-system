@@ -13,12 +13,18 @@ npm run dev
 
 Hapni http://localhost:5173 (ose portin që tregon Vite). Sigurohuni që backend-i është aktiv dhe CORS lejon origjinën e frontend-it.
 
-## F0 — Çfarë përfshin
+## F0 — Scaffold
 
 - **Router:** `/login`, dashboard `/`, faqe placeholder për modulet
 - **API client:** `src/api/client.ts` (JWT nga `localStorage`)
 - **Tema sipas rolit:** Admin/Menaxher = **blu**, Staf (User) = **jeshil**
-- **Preview roli:** dropdown në header (heqet kur vjen F1 me `/api/me`)
+
+## F1 — Auth
+
+- **Login:** `POST /api/auth/login` → token në `localStorage`
+- **Profili:** `GET /api/me` → `roles`, `punetorId`, `isStaff`, `punetorEmri`
+- **Rrugë të mbrojtura:** pa token → `/login`; i loguar në `/login` → `/`
+- **Logout:** butoni «Dil» + `POST /api/auth/logout`
 
 ## Struktura
 

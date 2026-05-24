@@ -2,6 +2,12 @@ import { getAccessToken } from '../auth/token'
 
 const baseUrl = () => import.meta.env.VITE_API_URL as string | undefined
 
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler
+}
+
 export class ApiError extends Error {
   status: number
   body?: unknown
@@ -47,6 +53,15 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
+    if (
+      res.status === 401 &&
+      onUnauthorized &&
+      getAccessToken() &&
+      !path.includes('/auth/login')
+    ) {
+      onUnauthorized()
+    }
+
     const message =
       typeof data === 'object' &&
       data !== null &&
