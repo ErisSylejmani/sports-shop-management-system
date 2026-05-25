@@ -33,6 +33,18 @@ Hapni http://localhost:5173 (ose portin që tregon Vite). Sigurohuni që backend
 
 Commit: `feat(frontend): F1 login dhe rrugë të mbrojtura`
 
+## F2 — Dashboard (e përfunduar)
+
+| Kërkesa | Status |
+|---------|--------|
+| Statistika nga API (produkte, shitje sot, klientë, oferta aktive) | ✅ |
+| 5 shitjet e fundit | ✅ |
+| Staf: mirëseardhje me `punetorEmri` nga `/api/me` | ✅ |
+| Loading skeleton | ✅ |
+| Gabime në shqip | ✅ |
+
+Commit: `feat(frontend): F2 dashboard me statistika`
+
 ## Struktura
 
 ```
