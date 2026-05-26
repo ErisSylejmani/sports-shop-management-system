@@ -1,67 +1,56 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, Percent, ShoppingCart, Users } from 'lucide-react'
+import { AlertCircle, Package, Percent, ShoppingCart, Users } from 'lucide-react'
 import { fetchDashboardData, type DashboardData } from '../api/dashboard'
 import { ApiError } from '../api/client'
+import { roleLabel, type AppRole } from '../auth/roles'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
+import { SalesListSkeleton, StatCardSkeleton } from '../components/ui/Skeleton'
 import { Table, Td, Th } from '../components/ui/Table'
 import { useAuth } from '../context/AuthContext'
 import { useRoleTheme } from '../context/RoleThemeContext'
+import { formatCurrency, formatDateTime } from '../lib/format'
 import { cn } from '../lib/cn'
-import { roleLabel } from '../auth/roles'
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('sq-AL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+function getWelcomeTitle(
+  isStaff: boolean,
+  punetorEmri: string | null | undefined,
+  emri: string,
+  mbiemri: string,
+  role: AppRole,
+): string {
+  if (isStaff && punetorEmri?.trim()) {
+    return `Mirë se vini, ${punetorEmri.trim()}!`
+  }
+  const name = [emri, mbiemri].filter(Boolean).join(' ').trim()
+  if (name) return `Mirë se vini, ${name}!`
+  return `Mirë se vini, ${roleLabel(role)}!`
 }
 
-function formatMoney(value: number) {
-  return `${value.toLocaleString('sq-AL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+function getWelcomeSubtitle(isStaff: boolean): string {
+  if (isStaff) {
+    return 'Paneli i stafit — regjistrim shitjesh dhe kthime.'
+  }
+  return 'Përmbledhje e inventarit, shitjeve dhe ofertave.'
 }
 
-function StatCardSkeleton() {
-  return (
-    <div className="animate-pulse rounded-2xl bg-slate-200 p-5">
-      <div className="h-4 w-24 rounded bg-slate-300" />
-      <div className="mt-4 h-9 w-16 rounded bg-slate-300" />
-    </div>
-  )
-}
-
-function DashboardSkeleton() {
-  return (
-    <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <StatCardSkeleton key={i} />
-        ))}
-      </div>
-      <Card className="mt-6">
-        <CardHeader>
-          <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
-        </CardHeader>
-        <CardBody className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
-          ))}
-        </CardBody>
-      </Card>
-    </>
-  )
+function resolveErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 0) return err.message
+    if (err.status === 401) return 'Sesioni ka skaduar. Hyni përsëri.'
+    if (err.status === 403) return 'Nuk keni leje për të parë këto të dhëna.'
+    return err.message
+  }
+  return 'Nuk u arrit të ngarkohen të dhënat e panelit. Kontrolloni që API është aktiv.'
 }
 
 export function DashboardPage() {
   const { user } = useAuth()
   const { role, theme } = useRoleTheme()
   const [data, setData] = useState<DashboardData | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -74,11 +63,8 @@ export function DashboardPage() {
         if (!cancelled) setData(result)
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : 'Nuk u arrit të ngarkohen të dhënat e dashboard-it.',
-          )
+          setData(null)
+          setError(resolveErrorMessage(err))
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -91,49 +77,39 @@ export function DashboardPage() {
     }
   }, [])
 
-  const welcomeTitle = user?.isStaff && user.punetorEmri
-    ? `Mirë se vini, ${user.punetorEmri}!`
-    : user
-      ? `Mirë se vini, ${user.emri}!`
-      : `Mirë se vini, ${roleLabel(role)}!`
-
   const statCards = data
     ? [
         { label: 'Produkte', value: String(data.produktCount), icon: Package },
-        { label: 'Shitje (total)', value: String(data.shitjeCount), icon: ShoppingCart },
+        { label: 'Shitje sot', value: String(data.shitjeSotCount), icon: ShoppingCart },
         { label: 'Klientë', value: String(data.klientCount), icon: Users },
         { label: 'Oferta aktive', value: String(data.ofertaAktiveCount), icon: Percent },
       ]
     : []
 
+  const title = user
+    ? getWelcomeTitle(user.isStaff, user.punetorEmri, user.emri, user.mbiemri, role)
+    : `Mirë se vini, ${roleLabel(role)}!`
+
+  const subtitle = user ? getWelcomeSubtitle(user.isStaff) : undefined
+
   return (
     <>
-      <PageHeader
-        title={welcomeTitle}
-        subtitle={
-          role === 'staff'
-            ? 'Paneli i stafit — shitje dhe kthime.'
-            : 'Përmbledhje e inventarit, shitjeve dhe ofertave.'
-        }
-      />
+      <PageHeader title={title} subtitle={subtitle} />
 
-      {loading && <DashboardSkeleton />}
-
-      {!loading && error && (
-        <Card>
-          <CardBody className="py-10 text-center">
-            <p className="font-medium text-red-600">{error}</p>
-            <p className="mt-2 text-sm text-slate-500">
-              Sigurohuni që jeni i loguar dhe backend-i është aktiv.
-            </p>
-          </CardBody>
-        </Card>
+      {error && (
+        <div
+          role="alert"
+          className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+          <p>{error}</p>
+        </div>
       )}
 
-      {!loading && !error && data && (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {statCards.map((item, i) => (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+          : statCards.map((item, i) => (
               <div
                 key={item.label}
                 className={cn(
@@ -150,53 +126,55 @@ export function DashboardPage() {
                 </div>
               </div>
             ))}
-          </div>
+      </div>
 
-          <Card className="mt-6">
-            <CardHeader className="flex flex-row items-center justify-between gap-4">
-              <h2 className="font-semibold text-slate-800">Shitjet e fundit</h2>
-              <Link
-                to="/shitjet"
-                className="text-sm font-medium text-[var(--accent)] hover:underline"
-              >
-                Shiko të gjitha
-              </Link>
-            </CardHeader>
-            <CardBody className="p-0 sm:p-0">
-              {data.recentShitjet.length === 0 ? (
-                <p className="px-6 py-10 text-center text-sm text-slate-500">
-                  Nuk ka shitje të regjistruara ende.
-                </p>
-              ) : (
-                <Table>
-                  <thead>
-                    <tr>
-                      <Th>Data</Th>
-                      <Th>Klienti</Th>
-                      <Th>Punëtori</Th>
-                      <Th>Pagesa</Th>
-                      <Th className="text-right">Shuma</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.recentShitjet.map((s) => (
-                      <tr key={s.shitjeId} className="hover:bg-slate-50/80">
-                        <Td className="whitespace-nowrap text-slate-600">{formatDate(s.dataShitjes)}</Td>
-                        <Td className="font-medium">{s.klientEmri}</Td>
-                        <Td>{s.punetorEmri}</Td>
-                        <Td>{s.metodaPageses}</Td>
-                        <Td className="text-right font-semibold text-slate-900">
-                          {formatMoney(s.shumaTotale)}
-                        </Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              )}
-            </CardBody>
-          </Card>
-        </>
-      )}
+      <Card className="mt-6">
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <h2 className="font-semibold text-slate-800">Shitjet e fundit</h2>
+          <Link
+            to="/shitjet"
+            className="text-sm font-medium text-[var(--accent)] hover:underline"
+          >
+            Shiko të gjitha
+          </Link>
+        </CardHeader>
+        <CardBody className={loading || (data && data.recentShitjet.length > 0) ? undefined : 'py-10'}>
+          {loading ? (
+            <SalesListSkeleton />
+          ) : data && data.recentShitjet.length > 0 ? (
+            <Table>
+              <thead>
+                <tr>
+                  <Th>Data</Th>
+                  <Th>Klienti</Th>
+                  <Th>Punëtori</Th>
+                  <Th>Pagesa</Th>
+                  <Th className="text-right">Shuma</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recentShitjet.map((s) => (
+                  <tr key={s.shitjeId} className="hover:bg-slate-50/80">
+                    <Td className="whitespace-nowrap text-slate-600">
+                      {formatDateTime(s.dataShitjes)}
+                    </Td>
+                    <Td className="font-medium">{s.klientEmri}</Td>
+                    <Td>{s.punetorEmri}</Td>
+                    <Td>{s.metodaPageses}</Td>
+                    <Td className="text-right font-semibold text-slate-900">
+                      {formatCurrency(s.shumaTotale)}
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <p className="text-center text-sm text-slate-500">
+              Nuk ka shitje të regjistruara ende.
+            </p>
+          )}
+        </CardBody>
+      </Card>
     </>
   )
 }

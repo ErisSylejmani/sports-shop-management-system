@@ -3,10 +3,20 @@ import type { KlientDto, OfertaSummaryDto, ProduktDto, ShitjeSummaryDto } from '
 
 export type DashboardData = {
   produktCount: number
-  shitjeCount: number
+  shitjeSotCount: number
   klientCount: number
   ofertaAktiveCount: number
   recentShitjet: ShitjeSummaryDto[]
+}
+
+function isToday(iso: string): boolean {
+  const d = new Date(iso)
+  const now = new Date()
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  )
 }
 
 export async function fetchDashboardData(): Promise<DashboardData> {
@@ -19,7 +29,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   return {
     produktCount: produkte.length,
-    shitjeCount: shitjet.length,
+    shitjeSotCount: shitjet.filter((s) => isToday(s.dataShitjes)).length,
     klientCount: klientet.length,
     ofertaAktiveCount: ofertat.length,
     recentShitjet: shitjet.slice(0, 5),

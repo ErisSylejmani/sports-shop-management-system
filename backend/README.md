@@ -33,6 +33,16 @@ Server=(localdb)\mssqllocaldb;Database=SportsShopDb;...
 
 Për databazë të përbashkët me ekipin, ndryshoni `ConnectionStrings:DefaultConnection` (mos e commit-oni fjalëkalimin në Git).
 
+**Nuk keni LocalDB, por keni SQL Express?** Mos ndryshoni skedarët e ekipit — vendosni lidhjen **vetëm në makinën tuaj** me User Secrets (mbishkruan `appsettings.Development.json`):
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost\SQLEXPRESS;Database=SportsShopDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true" --project backend
+```
+
+Pastaj: `dotnet ef database update` (nëse `dotnet ef` nuk gjendet, përdorni `%USERPROFILE%\.dotnet\tools\dotnet-ef.exe database update` nga folderi `backend`).
+
+Në **SSMS**: server name `localhost\SQLEXPRESS`, Windows Authentication.
+
 ### 2. User Secrets (JWT — i detyrueshëm)
 
 `Jwt:SigningKey` duhet të ketë **të paktën 32 byte** (p.sh. ~32+ karaktere). Vendosen me User Secrets (tashmë i konfiguruar `UserSecretsId` në `.csproj`):
