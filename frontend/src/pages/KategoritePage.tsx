@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ApiError } from '../api/client'
+import { useEffect, useState } from 'react'
+import { Tags } from 'lucide-react'
 import {
   createKategori,
   deleteKategori,
@@ -8,12 +8,20 @@ import {
   updateKategori,
 } from '../api/catalog'
 import type { KategoriDto } from '../api/types'
+import { canWriteCatalog } from '../auth/permissions'
 import { PageHeader } from '../components/layout/PageHeader'
+import { ReadOnlyBadge } from '../components/layout/ReadOnlyBadge'
+import { Alert } from '../components/ui/Alert'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
+import { EmptyState } from '../components/ui/EmptyState'
 import { Input } from '../components/ui/Input'
-import { Table, Td, Th } from '../components/ui/Table'
+import { Select } from '../components/ui/Select'
+import { TableSkeleton } from '../components/ui/Skeleton'
+import { Table, Td, Th, Tr } from '../components/ui/Table'
+import { Textarea } from '../components/ui/Textarea'
 import { useAuth } from '../context/AuthContext'
+import { resolveApiError } from '../lib/errors'
 
 const initialForm = {
   emri: '',
@@ -23,10 +31,7 @@ const initialForm = {
 
 export function KategoritePage() {
   const { user } = useAuth()
-  const canWrite = useMemo(
-    () => !!user?.roles?.some((r) => r === 'Admin' || r === 'Manager'),
-    [user?.roles],
-  )
+  const canWrite = canWriteCatalog(user?.roles)
 
   const [items, setItems] = useState<KategoriDto[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,7 +49,7 @@ export function KategoritePage() {
       const data = await listKategorite()
       setItems(data)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Gabim gjatë leximit të kategorive.')
+      setError(resolveApiError(err, 'Gabim gjatë leximit të kategorive.'))
     } finally {
       setLoading(false)
     }
@@ -84,8 +89,8 @@ export function KategoritePage() {
     if (!canWrite) return
 
     const payload: KategoriPayload = {
-      emri: form.emri,
-      pershkrimi: form.pershkrimi || null,
+      emri: form.emri.trim(),
+      pershkrimi: form.pershkrimi.trim() || null,
       kategoriaPrindId: form.kategoriaPrindId || null,
     }
 
@@ -100,7 +105,7 @@ export function KategoritePage() {
       await load()
       closeForm()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Ruajtja dështoi.')
+      setActionError(resolveApiError(err, 'Ruajtja e kategorisë dështoi.'))
     } finally {
       setSaving(false)
     }
@@ -110,34 +115,31 @@ export function KategoritePage() {
     if (!canWrite) return
     if (!confirm(`Fshi kategorinë "${item.emri}"?`)) return
 
+    setActionError(null)
     try {
       await deleteKategori(item.kategoriId)
       await load()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Fshirja dështoi.')
+      setActionError(resolveApiError(err, 'Fshirja e kategorisë dështoi.'))
     }
   }
 
   const parentOptions = items.filter((k) => k.kategoriId !== editing?.kategoriId)
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader
+        icon={Tags}
         title="Kategoritë"
-        subtitle="Menaxho kategoritë e produkteve."
-        actions={
-          canWrite ? (
-            <Button onClick={openCreate}>Shto kategori</Button>
-          ) : (
-            <span className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-              Stafi ka vetëm lexim
-            </span>
-          )
-        }
+        subtitle="Organizoni produktet sipas kategorive dhe nën-kategorive."
+        actions={canWrite ? <Button onClick={openCreate}>Shto kategori</Button> : <ReadOnlyBadge />}
       />
 
+      {error && <Alert variant="error">{error}</Alert>}
+      {actionError && !showForm && <Alert variant="error">{actionError}</Alert>}
+
       {showForm && (
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <h2 className="font-semibold text-slate-800">
               {editing ? 'Ndrysho kategori' : 'Krijo kategori'}
@@ -151,32 +153,25 @@ export function KategoritePage() {
                 onChange={(e) => setForm((f) => ({ ...f, emri: e.target.value }))}
                 required
               />
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-600">Përshkrimi</label>
-                <textarea
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]/30"
-                  rows={3}
-                  value={form.pershkrimi}
-                  onChange={(e) => setForm((f) => ({ ...f, pershkrimi: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-600">Kategori prind</label>
-                <select
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]/30"
-                  value={form.kategoriaPrindId}
-                  onChange={(e) => setForm((f) => ({ ...f, kategoriaPrindId: e.target.value }))}
-                >
-                  <option value="">Pa prind</option>
-                  {parentOptions.map((k) => (
-                    <option key={k.kategoriId} value={k.kategoriId}>
-                      {k.emri}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Textarea
+                label="Përshkrimi"
+                value={form.pershkrimi}
+                onChange={(e) => setForm((f) => ({ ...f, pershkrimi: e.target.value }))}
+              />
+              <Select
+                label="Kategori prind"
+                value={form.kategoriaPrindId}
+                onChange={(e) => setForm((f) => ({ ...f, kategoriaPrindId: e.target.value }))}
+              >
+                <option value="">Pa prind</option>
+                {parentOptions.map((k) => (
+                  <option key={k.kategoriId} value={k.kategoriId}>
+                    {k.emri}
+                  </option>
+                ))}
+              </Select>
               {actionError && <p className="text-sm text-red-600">{actionError}</p>}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                 <Button type="submit" disabled={saving}>
                   {saving ? 'Duke ruajtur...' : editing ? 'Ruaj ndryshimet' : 'Krijo'}
                 </Button>
@@ -193,13 +188,17 @@ export function KategoritePage() {
         <CardHeader>
           <h2 className="font-semibold text-slate-800">Lista e kategorive</h2>
         </CardHeader>
-        <CardBody className="space-y-3">
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {actionError && !showForm && <p className="text-sm text-red-600">{actionError}</p>}
+        <CardBody>
           {loading ? (
-            <p className="text-sm text-slate-500">Duke ngarkuar kategoritë...</p>
+            <TableSkeleton rows={4} cols={canWrite ? 4 : 3} />
           ) : items.length === 0 ? (
-            <p className="text-sm text-slate-500">Nuk ka kategori të regjistruara.</p>
+            <EmptyState
+              message={
+                canWrite
+                  ? 'Nuk ka kategori. Klikoni "Shto kategori" për të filluar.'
+                  : 'Nuk ka kategori të regjistruara.'
+              }
+            />
           ) : (
             <Table>
               <thead>
@@ -214,8 +213,8 @@ export function KategoritePage() {
                 {items.map((k) => {
                   const prind = items.find((x) => x.kategoriId === k.kategoriaPrindId)
                   return (
-                    <tr key={k.kategoriId}>
-                      <Td className="font-medium">{k.emri}</Td>
+                    <Tr key={k.kategoriId}>
+                      <Td className="font-medium text-slate-900">{k.emri}</Td>
                       <Td>{k.pershkrimi || '—'}</Td>
                       <Td>{prind?.emri || '—'}</Td>
                       {canWrite && (
@@ -230,7 +229,7 @@ export function KategoritePage() {
                           </div>
                         </Td>
                       )}
-                    </tr>
+                    </Tr>
                   )
                 })}
               </tbody>
@@ -238,6 +237,6 @@ export function KategoritePage() {
           )}
         </CardBody>
       </Card>
-    </>
+    </div>
   )
 }

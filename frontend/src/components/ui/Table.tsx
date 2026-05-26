@@ -24,3 +24,9 @@ export function Th({ className, ...props }: HTMLAttributes<HTMLTableCellElement>
 export function Td({ className, ...props }: HTMLAttributes<HTMLTableCellElement>) {
   return <td className={cn('border-t border-slate-100 px-4 py-3 text-slate-700', className)} {...props} />
 }
+
+export function Tr({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
+  return (
+    <tr className={cn('transition hover:bg-slate-50/80', className)} {...props} />
+  )
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ApiError } from '../api/client'
+import { Link } from 'react-router-dom'
+import { Package, Search } from 'lucide-react'
 import {
   createProdukt,
   deleteProdukt,
@@ -9,12 +10,21 @@ import {
   updateProdukt,
 } from '../api/catalog'
 import type { KategoriDto, ProduktDto } from '../api/types'
+import { canWriteCatalog } from '../auth/permissions'
 import { PageHeader } from '../components/layout/PageHeader'
+import { ReadOnlyBadge } from '../components/layout/ReadOnlyBadge'
+import { Alert } from '../components/ui/Alert'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
+import { EmptyState } from '../components/ui/EmptyState'
 import { Input } from '../components/ui/Input'
-import { Table, Td, Th } from '../components/ui/Table'
+import { Select } from '../components/ui/Select'
+import { TableSkeleton } from '../components/ui/Skeleton'
+import { Table, Td, Th, Tr } from '../components/ui/Table'
+import { Textarea } from '../components/ui/Textarea'
 import { useAuth } from '../context/AuthContext'
+import { resolveApiError } from '../lib/errors'
+import { formatCurrency } from '../lib/format'
 
 const initialForm = {
   emri: '',
@@ -28,22 +38,16 @@ const initialForm = {
   ngjyra: '',
 }
 
-function toMoney(value: number) {
-  return `${value.toLocaleString('sq-AL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
-}
-
 export function ProduktePage() {
   const { user } = useAuth()
-  const canWrite = useMemo(
-    () => !!user?.roles?.some((r) => r === 'Admin' || r === 'Manager'),
-    [user?.roles],
-  )
+  const canWrite = canWriteCatalog(user?.roles)
 
   const [produkte, setProdukte] = useState<ProduktDto[]>([])
   const [kategorite, setKategorite] = useState<KategoriDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [kategoriFilter, setKategoriFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<ProduktDto | null>(null)
   const [form, setForm] = useState(initialForm)
@@ -54,11 +58,14 @@ export function ProduktePage() {
     setLoading(true)
     setError(null)
     try {
-      const [p, k] = await Promise.all([listProdukte(), listKategorite()])
+      const [p, k] = await Promise.all([
+        listProdukte(kategoriFilter || undefined),
+        listKategorite(),
+      ])
       setProdukte(p)
       setKategorite(k)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Gabim gjatë leximit të produkteve.')
+      setError(resolveApiError(err, 'Gabim gjatë leximit të produkteve.'))
     } finally {
       setLoading(false)
     }
@@ -66,7 +73,7 @@ export function ProduktePage() {
 
   useEffect(() => {
     void load()
-  }, [])
+  }, [kategoriFilter])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -78,7 +85,10 @@ export function ProduktePage() {
 
   function openCreate() {
     setEditing(null)
-    setForm(initialForm)
+    setForm({
+      ...initialForm,
+      kategoriId: kategoriFilter || '',
+    })
     setActionError(null)
     setShowForm(true)
   }
@@ -111,16 +121,29 @@ export function ProduktePage() {
     e.preventDefault()
     if (!canWrite) return
 
+    const cmimiBlerjes = Number(form.cmimiBlerjes)
+    const cmimiShitjes = Number(form.cmimiShitjes)
+    const sasiaStok = Number(form.sasiaStok)
+
+    if (!form.kategoriId) {
+      setActionError('Zgjidhni një kategori.')
+      return
+    }
+    if (Number.isNaN(cmimiBlerjes) || Number.isNaN(cmimiShitjes) || Number.isNaN(sasiaStok)) {
+      setActionError('Çmimet dhe stoku duhet të jenë numra të vlefshëm.')
+      return
+    }
+
     const payload: ProduktPayload = {
-      emri: form.emri,
-      pershkrimi: form.pershkrimi || null,
+      emri: form.emri.trim(),
+      pershkrimi: form.pershkrimi.trim() || null,
       kategoriId: form.kategoriId,
-      marka: form.marka,
-      cmimiBlerjes: Number(form.cmimiBlerjes),
-      cmimiShitjes: Number(form.cmimiShitjes),
-      sasiaStok: Number(form.sasiaStok),
-      madhesia: form.madhesia || null,
-      ngjyra: form.ngjyra || null,
+      marka: form.marka.trim(),
+      cmimiBlerjes,
+      cmimiShitjes,
+      sasiaStok,
+      madhesia: form.madhesia.trim() || null,
+      ngjyra: form.ngjyra.trim() || null,
     }
 
     setSaving(true)
@@ -134,7 +157,7 @@ export function ProduktePage() {
       await load()
       closeForm()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Ruajtja dështoi.')
+      setActionError(resolveApiError(err, 'Ruajtja e produktit dështoi.'))
     } finally {
       setSaving(false)
     }
@@ -144,32 +167,47 @@ export function ProduktePage() {
     if (!canWrite) return
     if (!confirm(`Fshi produktin "${item.emri}"?`)) return
 
+    setActionError(null)
     try {
       await deleteProdukt(item.produktId)
       await load()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Fshirja dështoi.')
+      setActionError(resolveApiError(err, 'Fshirja e produktit dështoi.'))
     }
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader
+        icon={Package}
         title="Produktet"
-        subtitle="Katalogu i produkteve me filtrim lokal."
+        subtitle="Katalogu i inventarit — çmime, stok dhe kategori."
         actions={
           canWrite ? (
-            <Button onClick={openCreate}>Shto produkt</Button>
+            <Button onClick={openCreate} disabled={kategorite.length === 0}>
+              Shto produkt
+            </Button>
           ) : (
-            <span className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-              Stafi ka vetëm lexim
-            </span>
+            <ReadOnlyBadge />
           )
         }
       />
 
+      {error && <Alert variant="error">{error}</Alert>}
+      {actionError && !showForm && <Alert variant="error">{actionError}</Alert>}
+
+      {kategorite.length === 0 && !loading && canWrite && (
+        <Alert variant="warning">
+          Së pari{' '}
+          <Link to="/kategorite" className="font-semibold underline hover:no-underline">
+            krijoni një kategori
+          </Link>{' '}
+          për të shtuar produkte.
+        </Alert>
+      )}
+
       {showForm && (
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <h2 className="font-semibold text-slate-800">
               {editing ? 'Ndrysho produkt' : 'Krijo produkt'}
@@ -190,32 +228,27 @@ export function ProduktePage() {
                 required
               />
 
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="block text-sm font-medium text-slate-600">Përshkrimi</label>
-                <textarea
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]/30"
-                  rows={3}
+              <div className="md:col-span-2">
+                <Textarea
+                  label="Përshkrimi"
                   value={form.pershkrimi}
                   onChange={(e) => setForm((f) => ({ ...f, pershkrimi: e.target.value }))}
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-600">Kategoria</label>
-                <select
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]/30"
-                  value={form.kategoriId}
-                  onChange={(e) => setForm((f) => ({ ...f, kategoriId: e.target.value }))}
-                  required
-                >
-                  <option value="">Zgjidh kategori</option>
-                  {kategorite.map((k) => (
-                    <option key={k.kategoriId} value={k.kategoriId}>
-                      {k.emri}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Kategoria"
+                value={form.kategoriId}
+                onChange={(e) => setForm((f) => ({ ...f, kategoriId: e.target.value }))}
+                required
+              >
+                <option value="">Zgjidh kategori</option>
+                {kategorite.map((k) => (
+                  <option key={k.kategoriId} value={k.kategoriId}>
+                    {k.emri}
+                  </option>
+                ))}
+              </Select>
 
               <Input
                 label="Çmimi blerjes"
@@ -258,9 +291,11 @@ export function ProduktePage() {
                 onChange={(e) => setForm((f) => ({ ...f, ngjyra: e.target.value }))}
               />
 
-              {actionError && <p className="text-sm text-red-600 md:col-span-2">{actionError}</p>}
+              {actionError && (
+                <p className="text-sm text-red-600 md:col-span-2">{actionError}</p>
+              )}
 
-              <div className="flex flex-wrap gap-2 md:col-span-2">
+              <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4 md:col-span-2">
                 <Button type="submit" disabled={saving}>
                   {saving ? 'Duke ruajtur...' : editing ? 'Ruaj ndryshimet' : 'Krijo'}
                 </Button>
@@ -274,25 +309,43 @@ export function ProduktePage() {
       )}
 
       <Card>
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <h2 className="font-semibold text-slate-800">Lista e produkteve</h2>
-          <div className="w-full md:w-80">
+          <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto lg:min-w-[28rem]">
+            <Select
+              label="Filtro kategori"
+              value={kategoriFilter}
+              onChange={(e) => setKategoriFilter(e.target.value)}
+            >
+              <option value="">Të gjitha kategoritë</option>
+              {kategorite.map((k) => (
+                <option key={k.kategoriId} value={k.kategoriId}>
+                  {k.emri}
+                </option>
+              ))}
+            </Select>
             <Input
-              placeholder="Filtro sipas emrit, markës ose kategorisë..."
+              label="Kërko"
+              placeholder="Emër, markë, kategori..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              icon={<Search className="h-4 w-4" />}
             />
           </div>
         </CardHeader>
-        <CardBody className="space-y-3">
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {actionError && !showForm && <p className="text-sm text-red-600">{actionError}</p>}
+        <CardBody>
           {loading ? (
-            <p className="text-sm text-slate-500">Duke ngarkuar produktet...</p>
+            <TableSkeleton rows={6} cols={canWrite ? 6 : 5} />
           ) : filtered.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              {query ? 'Nuk ka rezultate për filtrin aktual.' : 'Nuk ka produkte të regjistruara.'}
-            </p>
+            <EmptyState
+              message={
+                query || kategoriFilter
+                  ? 'Nuk ka rezultate për filtrin aktual.'
+                  : canWrite
+                    ? 'Nuk ka produkte. Klikoni "Shto produkt" për të filluar.'
+                    : 'Nuk ka produkte të regjistruara.'
+              }
+            />
           ) : (
             <Table>
               <thead>
@@ -300,18 +353,18 @@ export function ProduktePage() {
                   <Th>Emri</Th>
                   <Th>Marka</Th>
                   <Th>Kategoria</Th>
-                  <Th className="text-right">Çmimi</Th>
+                  <Th className="text-right">Çmimi shitjes</Th>
                   <Th className="text-right">Stok</Th>
                   {canWrite && <Th className="text-right">Veprime</Th>}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((p) => (
-                  <tr key={p.produktId}>
-                    <Td className="font-medium">{p.emri}</Td>
+                  <Tr key={p.produktId}>
+                    <Td className="font-medium text-slate-900">{p.emri}</Td>
                     <Td>{p.marka}</Td>
                     <Td>{p.kategoriEmri}</Td>
-                    <Td className="text-right">{toMoney(p.cmimiShitjes)}</Td>
+                    <Td className="text-right font-medium">{formatCurrency(p.cmimiShitjes)}</Td>
                     <Td className="text-right">{p.sasiaStok}</Td>
                     {canWrite && (
                       <Td className="text-right">
@@ -325,13 +378,13 @@ export function ProduktePage() {
                         </div>
                       </Td>
                     )}
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
             </Table>
           )}
         </CardBody>
       </Card>
-    </>
+    </div>
   )
 }

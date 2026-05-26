@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { Bell, LogOut, Search, UserCircle } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { PageSection } from './PageSection'
 import { Sidebar } from './Sidebar'
 import { useAuth } from '../../context/AuthContext'
 import { useRoleTheme } from '../../context/RoleThemeContext'
@@ -61,8 +62,10 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-6">
-          <Outlet />
+        <main className="flex-1 overflow-auto bg-slate-100 p-4 sm:p-6">
+          <PageSection>
+            <Outlet />
+          </PageSection>
         </main>
       </div>
     </div>

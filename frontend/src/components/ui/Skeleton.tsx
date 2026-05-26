@@ -42,3 +42,20 @@ export function SalesListSkeleton() {
     </ul>
   )
 }
+
+type TableSkeletonProps = {
+  rows?: number
+  cols?: number
+}
+
+export function TableSkeleton({ rows = 5, cols = 4 }: TableSkeletonProps) {
+  return (
+    <div className="space-y-2">
+      <Skeleton className="h-10 w-full rounded-xl" />
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-lg" />
+      ))}
+      <span className="sr-only">Duke ngarkuar tabelën ({cols} kolona)</span>
+    </div>
+  )
+}

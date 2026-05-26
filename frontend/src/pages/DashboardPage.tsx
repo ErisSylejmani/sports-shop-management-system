@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertCircle, Package, Percent, ShoppingCart, Users } from 'lucide-react'
+import { LayoutDashboard, Package, Percent, ShoppingCart, Users } from 'lucide-react'
 import { fetchDashboardData, type DashboardData } from '../api/dashboard'
 import { ApiError } from '../api/client'
 import { roleLabel, type AppRole } from '../auth/roles'
 import { PageHeader } from '../components/layout/PageHeader'
+import { Alert } from '../components/ui/Alert'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { SalesListSkeleton, StatCardSkeleton } from '../components/ui/Skeleton'
-import { Table, Td, Th } from '../components/ui/Table'
+import { Table, Td, Th, Tr } from '../components/ui/Table'
 import { useAuth } from '../context/AuthContext'
 import { useRoleTheme } from '../context/RoleThemeContext'
 import { formatCurrency, formatDateTime } from '../lib/format'
@@ -93,18 +94,10 @@ export function DashboardPage() {
   const subtitle = user ? getWelcomeSubtitle(user.isStaff) : undefined
 
   return (
-    <>
-      <PageHeader title={title} subtitle={subtitle} />
+    <div className="space-y-6">
+      <PageHeader icon={LayoutDashboard} title={title} subtitle={subtitle} />
 
-      {error && (
-        <div
-          role="alert"
-          className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-        >
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-          <p>{error}</p>
-        </div>
-      )}
+      {error && <Alert variant="error">{error}</Alert>}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {loading
@@ -128,7 +121,7 @@ export function DashboardPage() {
             ))}
       </div>
 
-      <Card className="mt-6">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <h2 className="font-semibold text-slate-800">Shitjet e fundit</h2>
           <Link
@@ -154,7 +147,7 @@ export function DashboardPage() {
               </thead>
               <tbody>
                 {data.recentShitjet.map((s) => (
-                  <tr key={s.shitjeId} className="hover:bg-slate-50/80">
+                  <Tr key={s.shitjeId}>
                     <Td className="whitespace-nowrap text-slate-600">
                       {formatDateTime(s.dataShitjes)}
                     </Td>
@@ -164,7 +157,7 @@ export function DashboardPage() {
                     <Td className="text-right font-semibold text-slate-900">
                       {formatCurrency(s.shumaTotale)}
                     </Td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
             </Table>
@@ -175,6 +168,6 @@ export function DashboardPage() {
           )}
         </CardBody>
       </Card>
-    </>
+    </div>
   )
 }
