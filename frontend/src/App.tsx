@@ -7,6 +7,8 @@ import { AuthProvider } from './context/AuthContext'
 import { RoleThemeProvider } from './context/RoleThemeContext'
 import { LoginPage } from './pages/LoginPage'
 import { RoleBasedHome } from './components/auth/RoleBasedHome'
+import { KategoritePage } from './pages/KategoritePage'
+import { ProduktePage } from './pages/ProduktePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
@@ -24,8 +26,8 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route index element={<RoleBasedHome />} />
-                <Route path="kategorite" element={<PlaceholderPage title="Kategoritë" />} />
-                <Route path="produkte" element={<PlaceholderPage title="Produktet" />} />
+                <Route path="kategorite" element={<KategoritePage />} />
+                <Route path="produkte" element={<ProduktePage />} />
                 <Route path="klientet" element={<PlaceholderPage title="Klientët" />} />
                 <Route path="punetoret" element={<PlaceholderPage title="Punëtorët" />} />
                 <Route path="furnitore" element={<PlaceholderPage title="Furnitorët" />} />

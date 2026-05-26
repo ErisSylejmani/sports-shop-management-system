@@ -1,10 +1,22 @@
 export type ProduktDto = {
   produktId: string
   emri: string
+  pershkrimi?: string | null
+  kategoriId: string
   kategoriEmri: string
   marka: string
+  cmimiBlerjes: number
   cmimiShitjes: number
   sasiaStok: number
+  madhesia?: string | null
+  ngjyra?: string | null
+}
+
+export type KategoriDto = {
+  kategoriId: string
+  emri: string
+  pershkrimi?: string | null
+  kategoriaPrindId?: string | null
 }
 
 export type ShitjeSummaryDto = {

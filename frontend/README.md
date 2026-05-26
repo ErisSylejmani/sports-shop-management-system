@@ -42,6 +42,15 @@ Commit: `feat(frontend): F1 login dhe rrugë të mbrojtura`
 
 Commit: `feat(frontend): F2 dashboard me statistika`
 
+## F3 — Katalog
+
+- `/kategorite`: listë + create/edit/delete (veprime vetëm për Admin/Manager)
+- `/produkte`: tabelë me filtër lokal (emër, markë, kategori)
+- Forma për create/edit për kategori dhe produkte (inline në faqe)
+- Staf (`User`): vetëm lexim, pa butona shkrimi
+
+Commit: `feat(frontend): F3 katalog produktesh`
+
 ## Struktura
 
 ```
