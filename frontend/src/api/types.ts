@@ -46,3 +46,44 @@ export type OfertaSummaryDto = {
   statusi: string
   numriProdukteve: number
 }
+
+export type FurnitorDto = {
+  furnitorId: string
+  emri: string
+  personiKontaktit?: string | null
+  telefoni?: string | null
+  email?: string | null
+  adresa?: string | null
+  qyteti?: string | null
+  shteti?: string | null
+}
+
+export type PorosiFurnitorSummaryDto = {
+  porosiId: string
+  furnitorId: string
+  furnitorEmri: string
+  dataPorosise: string
+  dataPritshme?: string | null
+  shumaTotale: number
+  statusi: string
+}
+
+export type PorosiFurnitorDetajDto = {
+  detajPorosiId: string
+  produktId: string
+  produktEmri: string
+  sasia: number
+  cmimiNjesi: number
+  cmimiTotal: number
+}
+
+export type PorosiFurnitorDetailDto = {
+  porosiId: string
+  furnitorId: string
+  furnitorEmri: string
+  dataPorosise: string
+  dataPritshme?: string | null
+  shumaTotale: number
+  statusi: string
+  detajet: PorosiFurnitorDetajDto[]
+}

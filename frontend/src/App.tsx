@@ -9,6 +9,8 @@ import { LoginPage } from './pages/LoginPage'
 import { RoleBasedHome } from './components/auth/RoleBasedHome'
 import { KategoritePage } from './pages/KategoritePage'
 import { ProduktePage } from './pages/ProduktePage'
+import { FurnitorePage } from './pages/FurnitorePage'
+import { PorosiFurnitorePage } from './pages/PorosiFurnitorePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
@@ -30,11 +32,8 @@ export default function App() {
                 <Route path="produkte" element={<ProduktePage />} />
                 <Route path="klientet" element={<PlaceholderPage title="Klientët" />} />
                 <Route path="punetoret" element={<PlaceholderPage title="Punëtorët" />} />
-                <Route path="furnitore" element={<PlaceholderPage title="Furnitorët" />} />
-                <Route
-                  path="porosi-furnitore"
-                  element={<PlaceholderPage title="Porositë e furnitorëve" />}
-                />
+                <Route path="furnitore" element={<FurnitorePage />} />
+                <Route path="porosi-furnitore" element={<PorosiFurnitorePage />} />
                 <Route path="shitjet" element={<PlaceholderPage title="Shitjet" />} />
                 <Route path="shitjet/e-re" element={<PlaceholderPage title="Shitje e re" />} />
                 <Route path="kthimet" element={<PlaceholderPage title="Kthimet" />} />

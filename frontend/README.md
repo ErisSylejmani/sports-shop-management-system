@@ -54,6 +54,14 @@ Commit: `feat(frontend): F2 dashboard me statistika`
 
 Commit: `feat(frontend): F3 katalog produktesh`
 
+## F4 — Furnitorë dhe porosi furnitori
+
+- `/furnitore`: CRUD i plotë
+- `/porosi-furnitore`: listë, detaj dhe formë me rreshta dinamikë (`produktId`, `sasia`, `cmimiNjesi` opsional)
+- Akses UI vetëm për rolet Admin/Manager
+
+Commit: `feat(frontend): F4 furnitorë dhe porosi`
+
 ## Struktura
 
 ```
