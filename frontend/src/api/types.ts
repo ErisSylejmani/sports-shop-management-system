@@ -35,6 +35,11 @@ export type KlientDto = {
   klientId: string
   emri: string
   mbiemri: string
+  telefoni?: string | null
+  email?: string | null
+  adresa?: string | null
+  dataRegjistrimit: string
+  piketBesnikerise: number
 }
 
 export type OfertaSummaryDto = {
@@ -86,4 +91,16 @@ export type PorosiFurnitorDetailDto = {
   shumaTotale: number
   statusi: string
   detajet: PorosiFurnitorDetajDto[]
+}
+
+export type PunetorDto = {
+  punetorId: string
+  emri: string
+  mbiemri: string
+  pozita: string
+  telefoni?: string | null
+  email?: string | null
+  dataPunesimit: string
+  paga: number
+  userId?: string | null
 }
