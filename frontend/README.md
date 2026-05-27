@@ -51,6 +51,7 @@ Commit: `feat(frontend): F2 dashboard me statistika`
 - `/produkte`: tabelë me filtër lokal (emër, markë, kategori)
 - Forma për create/edit për kategori dhe produkte (inline në faqe)
 - Staf (`User`): vetëm lexim, pa butona shkrimi
+- UI i njëjtë me AppLayout: `PageSection`, `Alert`, `Select`/`Textarea`, `ReadOnlyBadge`, ikona në `PageHeader`
 
 Commit: `feat(frontend): F3 katalog produktesh`
 
