@@ -16,6 +16,8 @@ import { PorosiFurnitorePage } from './pages/PorosiFurnitorePage'
 import { ShitjetPage } from './pages/ShitjetPage'
 import { ShitjeFormPage } from './pages/ShitjeFormPage'
 import { ShitjeDetailPage } from './pages/ShitjeDetailPage'
+import { KthimetPage } from './pages/KthimetPage'
+import { KthimFormPage } from './pages/KthimFormPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
@@ -42,7 +44,8 @@ export default function App() {
                 <Route path="shitjet" element={<ShitjetPage />} />
                 <Route path="shitjet/e-re" element={<ShitjeFormPage />} />
                 <Route path="shitjet/:id" element={<ShitjeDetailPage />} />
-                <Route path="kthimet" element={<PlaceholderPage title="Kthimet" />} />
+                <Route path="kthimet" element={<KthimetPage />} />
+                <Route path="kthimet/e-re" element={<KthimFormPage />} />
                 <Route path="ofertat" element={<PlaceholderPage title="Ofertat" />} />
                 <Route
                   path="admin/perdoruesit"

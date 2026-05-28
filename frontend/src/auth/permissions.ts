@@ -14,5 +14,8 @@ export function canCreateShitje(roles: string[] | undefined): boolean {
   return !!roles?.some((r) => r === 'Admin' || r === 'Manager' || r === 'User')
 }
 
+/** Kthime: të njëjtat role si shitjet. */
+export const canCreateKthim = canCreateShitje
+
 /** Vetëm Admin/Manager zgjedhin punëtorin në formën e shitjes. */
 export const canPickPunetorForShitje = canWriteManagement

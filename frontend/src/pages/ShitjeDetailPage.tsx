@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, RotateCcw, ShoppingCart } from 'lucide-react'
 import { getShitje } from '../api/shitje'
 import type { ShitjeDetailDto } from '../api/types'
+import { canCreateKthim } from '../auth/permissions'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { Table, Td, Th, Tr } from '../components/ui/Table'
+import { useAuth } from '../context/AuthContext'
 import { resolveApiError } from '../lib/errors'
 import { formatCurrency, formatDateTime } from '../lib/format'
 
 export function ShitjeDetailPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const canCreateKthimReturn = canCreateKthim(user?.roles)
   const { id } = useParams<{ id: string }>()
   const [detail, setDetail] = useState<ShitjeDetailDto | null>(null)
   const [loading, setLoading] = useState(true)
@@ -132,6 +136,7 @@ export function ShitjeDetailPage() {
                       <Th className="text-right">Sasia</Th>
                       <Th className="text-right">Çmimi/njësi</Th>
                       <Th className="text-right">Totali</Th>
+                      {canCreateKthimReturn && <Th />}
                     </tr>
                   </thead>
                   <tbody>
@@ -143,6 +148,17 @@ export function ShitjeDetailPage() {
                         <Td className="text-right font-medium">
                           {formatCurrency(d.cmimiTotal)}
                         </Td>
+                        {canCreateKthimReturn && (
+                          <Td className="text-right">
+                            <Link
+                              to={`/kthimet/e-re?shitjeId=${detail.shitjeId}&produktId=${d.produktId}`}
+                              className="inline-flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:underline"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              Kthim
+                            </Link>
+                          </Td>
+                        )}
                       </Tr>
                     ))}
                   </tbody>

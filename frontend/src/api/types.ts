@@ -135,3 +135,15 @@ export type PunetorDto = {
   paga: number
   userId?: string | null
 }
+
+export type KthimDto = {
+  kthimId: string
+  shitjeId: string
+  produktId: string
+  produktEmri: string
+  dataShitjes: string
+  sasia: number
+  arsyeja: string
+  dataKthimit: string
+  statusi: string
+}
