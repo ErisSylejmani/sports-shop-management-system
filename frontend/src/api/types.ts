@@ -31,6 +31,37 @@ export type ShitjeSummaryDto = {
   metodaPageses: string
 }
 
+export type ShitjeDetajDto = {
+  detajShitjeId: string
+  produktId: string
+  produktEmri: string
+  sasia: number
+  cmimiNjesi: number
+  cmimiTotal: number
+}
+
+export type ShitjeDetailDto = {
+  shitjeId: string
+  klientId: string
+  klientEmri: string
+  punetorId: string
+  punetorEmri: string
+  dataShitjes: string
+  shumaParaZbritjes: number
+  zbritja: number
+  shumaTotale: number
+  metodaPageses: string
+  detajet: ShitjeDetajDto[]
+}
+
+export type CreateShitjeResponse = {
+  shitjeId: string
+  shumaParaZbritjes: number
+  zbritja: number
+  shumaTotale: number
+  detajet: ShitjeDetajDto[]
+}
+
 export type KlientDto = {
   klientId: string
   emri: string
