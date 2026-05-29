@@ -17,5 +17,8 @@ export function canCreateShitje(roles: string[] | undefined): boolean {
 /** Kthime: të njëjtat role si shitjet. */
 export const canCreateKthim = canCreateShitje
 
+/** Kthime: ndryshim/fshirje vetëm Admin/Manager (stafi merr 403 nga API). */
+export const canMutateKthim = canWriteManagement
+
 /** Vetëm Admin/Manager zgjedhin punëtorin në formën e shitjes. */
 export const canPickPunetorForShitje = canWriteManagement

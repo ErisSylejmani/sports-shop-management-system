@@ -15,6 +15,13 @@ export type CreateKthimPayload = {
   dataKthimit?: string | null
 }
 
+export type UpdateKthimPayload = {
+  sasia: number
+  arsyeja: string
+  dataKthimit: string
+  statusi: string
+}
+
 export function listKthimet(params?: ListKthimetParams) {
   const qs = new URLSearchParams()
   if (params?.shitjeId) qs.set('shitjeId', params.shitjeId)
@@ -32,4 +39,15 @@ export function createKthim(body: CreateKthimPayload) {
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+export function updateKthim(id: string, body: UpdateKthimPayload) {
+  return apiFetch<KthimDto>(`/api/kthimet/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+}
+
+export function deleteKthim(id: string) {
+  return apiFetch<void>(`/api/kthimet/${id}`, { method: 'DELETE' })
 }
