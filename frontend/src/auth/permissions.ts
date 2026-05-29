@@ -22,3 +22,9 @@ export const canMutateKthim = canWriteManagement
 
 /** Vetëm Admin/Manager zgjedhin punëtorin në formën e shitjes. */
 export const canPickPunetorForShitje = canWriteManagement
+
+/** Shitje: ndryshim/fshirje vetëm Admin/Manager (stafi merr 403 nga API). */
+export const canMutateShitje = canWriteManagement
+
+/** Ofertat: shkrim vetëm Admin/Manager. */
+export const canWriteOferta = canWriteManagement

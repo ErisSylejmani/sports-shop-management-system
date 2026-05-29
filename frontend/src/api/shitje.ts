@@ -32,9 +32,22 @@ export function getShitje(id: string) {
   return apiFetch<ShitjeDetailDto>(`/api/shitjet/${id}`)
 }
 
+export type UpdateShitjePayload = CreateShitjePayload
+
 export function createShitje(body: CreateShitjePayload) {
   return apiFetch<CreateShitjeResponse>('/api/shitjet', {
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+export function updateShitje(id: string, body: UpdateShitjePayload) {
+  return apiFetch<ShitjeDetailDto>(`/api/shitjet/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+}
+
+export function deleteShitje(id: string) {
+  return apiFetch<void>(`/api/shitjet/${id}`, { method: 'DELETE' })
 }

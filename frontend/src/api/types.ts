@@ -83,6 +83,23 @@ export type OfertaSummaryDto = {
   numriProdukteve: number
 }
 
+export type OferteProduktDto = {
+  oferteProduktId: string
+  produktId: string
+  produktEmri: string
+}
+
+export type OfertaDetailDto = {
+  ofertaId: string
+  emri: string
+  pershkrimi?: string | null
+  perqindjaZbritjes: number
+  dataFillimit: string
+  dataPerfundimit: string
+  statusi: string
+  produktet: OferteProduktDto[]
+}
+
 export type FurnitorDto = {
   furnitorId: string
   emri: string

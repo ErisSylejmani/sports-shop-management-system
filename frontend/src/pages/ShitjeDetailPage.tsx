@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, RotateCcw, ShoppingCart } from 'lucide-react'
-import { getShitje } from '../api/shitje'
+import { getShitje, deleteShitje } from '../api/shitje'
 import type { ShitjeDetailDto } from '../api/types'
-import { canCreateKthim } from '../auth/permissions'
+import { canCreateKthim, canMutateShitje } from '../auth/permissions'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
@@ -17,10 +17,12 @@ export function ShitjeDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const canCreateKthimReturn = canCreateKthim(user?.roles)
+  const canMutate = canMutateShitje(user?.roles)
   const { id } = useParams<{ id: string }>()
   const [detail, setDetail] = useState<ShitjeDetailDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!id) {
@@ -49,6 +51,21 @@ export function ShitjeDetailPage() {
     }
   }, [id])
 
+  async function onDelete() {
+    if (!canMutate || !id) return
+    if (!confirm('Fshi këtë shitje? Stoku do të rikthehet.')) return
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteShitje(id)
+      navigate('/shitjet', { replace: true })
+    } catch (err) {
+      setError(resolveApiError(err, 'Fshirja e shitjes dështoi.'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -56,10 +73,26 @@ export function ShitjeDetailPage() {
         subtitle={detail ? formatDateTime(detail.dataShitjes) : undefined}
         icon={ShoppingCart}
         actions={
-          <Button type="button" variant="ghost" onClick={() => navigate('/shitjet')}>
-            <ArrowLeft className="h-4 w-4" />
-            Lista
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {canMutate && id && (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => navigate(`/shitjet/${id}/ndrysho`)}
+                >
+                  Ndrysho
+                </Button>
+                <Button type="button" variant="danger" disabled={deleting} onClick={() => void onDelete()}>
+                  {deleting ? 'Duke fshirë…' : 'Fshi'}
+                </Button>
+              </>
+            )}
+            <Button type="button" variant="ghost" onClick={() => navigate('/shitjet')}>
+              <ArrowLeft className="h-4 w-4" />
+              Lista
+            </Button>
+          </div>
         }
       />
 

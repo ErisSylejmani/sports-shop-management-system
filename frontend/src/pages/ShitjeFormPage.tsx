@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMatch, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, ShoppingCart, Trash2 } from 'lucide-react'
-import { createShitje, type CreateShitjePayload } from '../api/shitje'
+import {
+  createShitje,
+  getShitje,
+  updateShitje,
+  type CreateShitjePayload,
+} from '../api/shitje'
 import { listKlientet } from '../api/klientet'
 import { listProdukte } from '../api/catalog'
 import { listPunetoret } from '../api/punetoret'
@@ -9,6 +14,7 @@ import type { KlientDto, ProduktDto, PunetorDto } from '../api/types'
 import { ApiError } from '../api/client'
 import {
   canCreateShitje,
+  canMutateShitje,
   canPickPunetorForShitje,
 } from '../auth/permissions'
 import { PageHeader } from '../components/layout/PageHeader'
@@ -37,8 +43,14 @@ const initialForm = {
 
 export function ShitjeFormPage() {
   const navigate = useNavigate()
+  const editMatch = useMatch('/shitjet/:id/ndrysho')
+  const editId = editMatch?.params.id
+  const isEdit = !!editId
+
   const { user } = useAuth()
   const canCreate = canCreateShitje(user?.roles)
+  const canMutate = canMutateShitje(user?.roles)
+  const canAccess = isEdit ? canMutate : canCreate
   const pickPunetor = canPickPunetorForShitje(user?.roles)
   const isStaff = user?.isStaff ?? false
 
@@ -46,6 +58,7 @@ export function ShitjeFormPage() {
   const [punetoret, setPunetoret] = useState<PunetorDto[]>([])
   const [produkte, setProdukte] = useState<ProduktDto[]>([])
   const [loadingRefs, setLoadingRefs] = useState(true)
+  const [loadingShitje, setLoadingShitje] = useState(isEdit)
   const [form, setForm] = useState(initialForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +73,37 @@ export function ShitjeFormPage() {
       .catch(() => setError('Ngarkimi i të dhënave referuese dështoi.'))
       .finally(() => setLoadingRefs(false))
   }, [])
+
+  useEffect(() => {
+    if (!isEdit || !editId) return
+
+    let cancelled = false
+    setLoadingShitje(true)
+    void getShitje(editId)
+      .then((d) => {
+        if (cancelled) return
+        setForm({
+          klientId: d.klientId,
+          punetorId: d.punetorId,
+          zbritja: String(d.zbritja),
+          metodaPageses: d.metodaPageses,
+          detajet:
+            d.detajet.length > 0
+              ? d.detajet.map((x) => ({ produktId: x.produktId, sasia: String(x.sasia) }))
+              : [{ produktId: '', sasia: '1' }],
+        })
+      })
+      .catch(() => {
+        if (!cancelled) setError('Ngarkimi i shitjes për edit dështoi.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingShitje(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isEdit, editId])
 
   useEffect(() => {
     if (!pickPunetor && user?.punetorId) {
@@ -104,7 +148,7 @@ export function ShitjeFormPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!canCreate) return
+    if (!canAccess) return
 
     if (!form.klientId) {
       setError('Zgjidhni një klient.')
@@ -159,20 +203,33 @@ export function ShitjeFormPage() {
     setSaving(true)
     setError(null)
     try {
-      const created = await createShitje(payload)
-      navigate(`/shitjet/${created.shitjeId}`, { replace: true })
+      if (isEdit && editId) {
+        await updateShitje(editId, payload)
+        navigate(`/shitjet/${editId}`, { replace: true })
+      } else {
+        const created = await createShitje(payload)
+        navigate(`/shitjet/${created.shitjeId}`, { replace: true })
+      }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Regjistrimi i shitjes dështoi.')
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : isEdit
+            ? 'Përditësimi i shitjes dështoi.'
+            : 'Regjistrimi i shitjes dështoi.',
+      )
     } finally {
       setSaving(false)
     }
   }
 
-  if (!canCreate) {
+  if (!canAccess) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Shitje e re" icon={ShoppingCart} />
-        <Alert variant="warning">Nuk keni leje për të regjistruar shitje.</Alert>
+        <PageHeader title={isEdit ? 'Ndrysho shitjen' : 'Shitje e re'} icon={ShoppingCart} />
+        <Alert variant="warning">
+          {isEdit ? 'Nuk keni leje për të ndryshuar shitje.' : 'Nuk keni leje për të regjistruar shitje.'}
+        </Alert>
         <Button type="button" variant="ghost" onClick={() => navigate('/shitjet')}>
           <ArrowLeft className="h-4 w-4" />
           Kthehu te lista
@@ -184,11 +241,19 @@ export function ShitjeFormPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Shitje e re"
-        subtitle="Regjistroni shitjen me rreshta produktesh; stoku përditësohet automatikisht."
+        title={isEdit ? 'Ndrysho shitjen' : 'Shitje e re'}
+        subtitle={
+          isEdit
+            ? 'Përditësoni të dhënat e shitjes; stoku ricalkulohet.'
+            : 'Regjistroni shitjen me rreshta produktesh; stoku përditësohet automatikisht.'
+        }
         icon={ShoppingCart}
         actions={
-          <Button type="button" variant="ghost" onClick={() => navigate('/shitjet')}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate(isEdit && editId ? `/shitjet/${editId}` : '/shitjet')}
+          >
             <ArrowLeft className="h-4 w-4" />
             Lista
           </Button>
@@ -346,10 +411,14 @@ export function ShitjeFormPage() {
         </Card>
 
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={saving || loadingRefs}>
-            {saving ? 'Duke ruajtur…' : 'Regjistro shitjen'}
+          <Button type="submit" disabled={saving || loadingRefs || loadingShitje}>
+            {saving ? 'Duke ruajtur…' : isEdit ? 'Ruaj ndryshimet' : 'Regjistro shitjen'}
           </Button>
-          <Button type="button" variant="ghost" onClick={() => navigate('/shitjet')}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate(isEdit && editId ? `/shitjet/${editId}` : '/shitjet')}
+          >
             Anulo
           </Button>
         </div>
