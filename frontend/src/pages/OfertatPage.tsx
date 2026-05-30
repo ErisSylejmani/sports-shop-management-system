@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { Percent } from 'lucide-react'
 import {
   createOferta,
   deleteOferta,
   getOferta,
+  listOfertaProduktet,
   listOfertat,
   type OfertaPayload,
   updateOferta,
@@ -51,6 +53,7 @@ function dateToIsoEnd(date: string) {
 
 export function OfertatPage() {
   const { user } = useAuth()
+  const isStaff = user?.isStaff ?? false
   const canWrite = canWriteOferta(user?.roles)
 
   const [items, setItems] = useState<OfertaSummaryDto[]>([])
@@ -80,8 +83,9 @@ export function OfertatPage() {
   }
 
   useEffect(() => {
+    if (isStaff) return
     void load()
-  }, [])
+  }, [isStaff])
 
   const filteredProdukte = useMemo(() => {
     const q = produktFilter.trim().toLowerCase()
@@ -93,7 +97,8 @@ export function OfertatPage() {
 
   async function openDetail(id: string) {
     try {
-      setDetail(await getOferta(id))
+      const [header, produktet] = await Promise.all([getOferta(id), listOfertaProduktet(id)])
+      setDetail({ ...header, produktet })
       setActionError(null)
     } catch (err) {
       setActionError(resolveApiError(err, 'Leximi i detajit dështoi.'))
@@ -110,7 +115,7 @@ export function OfertatPage() {
   async function openEdit(id: string) {
     if (!canWrite) return
     try {
-      const d = await getOferta(id)
+      const [d, produktet] = await Promise.all([getOferta(id), listOfertaProduktet(id)])
       setEditingId(id)
       setForm({
         emri: d.emri,
@@ -119,7 +124,7 @@ export function OfertatPage() {
         dataFillimit: toDateInputValue(d.dataFillimit),
         dataPerfundimit: toDateInputValue(d.dataPerfundimit),
         statusi: d.statusi,
-        produktIds: d.produktet.map((p) => p.produktId),
+        produktIds: produktet.map((p) => p.produktId),
       })
       setProduktFilter('')
       setActionError(null)
@@ -207,6 +212,10 @@ export function OfertatPage() {
     } catch (err) {
       setActionError(resolveApiError(err, 'Fshirja dështoi.'))
     }
+  }
+
+  if (isStaff) {
+    return <Navigate to="/" replace />
   }
 
   return (

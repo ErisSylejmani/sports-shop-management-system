@@ -1,5 +1,5 @@
 import { apiFetch } from './client'
-import type { OfertaDetailDto, OfertaSummaryDto } from './types'
+import type { OfertaDetailDto, OfertaSummaryDto, OferteProduktDto } from './types'
 
 export type OfertaPayload = {
   emri: string
@@ -44,4 +44,32 @@ export function updateOferta(id: string, body: OfertaPayload) {
 
 export function deleteOferta(id: string) {
   return apiFetch<void>(`/api/ofertat/${id}`, { method: 'DELETE' })
+}
+
+/** GET /api/ofertat/:id/produktet */
+export function listOfertaProduktet(ofertaId: string) {
+  return apiFetch<OferteProduktDto[]>(`/api/ofertat/${ofertaId}/produktet`)
+}
+
+/** PUT /api/ofertat/:id/produktet — zëvendëson listën e produkteve. */
+export function replaceOfertaProduktet(ofertaId: string, produktIds: string[]) {
+  return apiFetch<OferteProduktDto[]>(`/api/ofertat/${ofertaId}/produktet`, {
+    method: 'PUT',
+    body: JSON.stringify({ produktIds }),
+  })
+}
+
+/** POST /api/ofertat/:id/produktet */
+export function addOfertaProdukt(ofertaId: string, produktId: string) {
+  return apiFetch<OferteProduktDto>(`/api/ofertat/${ofertaId}/produktet`, {
+    method: 'POST',
+    body: JSON.stringify({ produktId }),
+  })
+}
+
+/** DELETE /api/ofertat/:id/produktet/:oferteProduktId */
+export function removeOfertaProdukt(ofertaId: string, oferteProduktId: string) {
+  return apiFetch<void>(`/api/ofertat/${ofertaId}/produktet/${oferteProduktId}`, {
+    method: 'DELETE',
+  })
 }

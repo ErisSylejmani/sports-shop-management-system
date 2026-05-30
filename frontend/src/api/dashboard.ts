@@ -1,5 +1,6 @@
+import { listOfertat } from './ofertat'
 import { apiFetch } from './client'
-import type { KlientDto, OfertaSummaryDto, ProduktDto, ShitjeSummaryDto } from './types'
+import type { KlientDto, ProduktDto, ShitjeSummaryDto } from './types'
 
 export type DashboardData = {
   produktCount: number
@@ -24,7 +25,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     apiFetch<ProduktDto[]>('/api/produkte'),
     apiFetch<ShitjeSummaryDto[]>('/api/shitjet'),
     apiFetch<KlientDto[]>('/api/klientet'),
-    apiFetch<OfertaSummaryDto[]>('/api/ofertat?aktive=true'),
+    listOfertat({ aktive: true }),
   ])
 
   return {
