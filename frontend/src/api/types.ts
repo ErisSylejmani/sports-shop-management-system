@@ -164,3 +164,47 @@ export type KthimDto = {
   dataKthimit: string
   statusi: string
 }
+
+export type AdminUserListItemDto = {
+  id: string
+  email?: string | null
+  emri: string
+  mbiemri: string
+  phoneNumber?: string | null
+  eshteAktiv: boolean
+  dataKrijimit: string
+  roles: string[]
+}
+
+export type AdminUsersListResponse = {
+  items: AdminUserListItemDto[]
+  totalCount: number
+  page: number
+  pageSize: number
+}
+
+export type AdminUserDetailDto = {
+  id: string
+  email?: string | null
+  emri: string
+  mbiemri: string
+  phoneNumber?: string | null
+  eshteAktiv: boolean
+  emailConfirmed: boolean
+  dataKrijimit: string
+  lockoutEnabled: boolean
+  lockoutEnd?: string | null
+  accessFailedCount: number
+  roles: string[]
+}
+
+export type AdminRoleDto = {
+  id: string
+  name: string
+  normalizedName?: string | null
+}
+
+export type AdminUserRolesResponse = {
+  id: string
+  roles: string[]
+}

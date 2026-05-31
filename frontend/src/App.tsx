@@ -19,7 +19,9 @@ import { ShitjeDetailPage } from './pages/ShitjeDetailPage'
 import { KthimetPage } from './pages/KthimetPage'
 import { KthimFormPage } from './pages/KthimFormPage'
 import { OfertatPage } from './pages/OfertatPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
+import { AdminRoute } from './components/auth/AdminRoute'
+import { AdminPerdoruesitPage } from './pages/AdminPerdoruesitPage'
+import { AdminRoletPage } from './pages/AdminRoletPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 export default function App() {
@@ -49,11 +51,10 @@ export default function App() {
                 <Route path="kthimet" element={<KthimetPage />} />
                 <Route path="kthimet/e-re" element={<KthimFormPage />} />
                 <Route path="ofertat" element={<OfertatPage />} />
-                <Route
-                  path="admin/perdoruesit"
-                  element={<PlaceholderPage title="Admin — Përdoruesit" />}
-                />
-                <Route path="admin/rolet" element={<PlaceholderPage title="Admin — Rolet" />} />
+                <Route element={<AdminRoute />}>
+                  <Route path="admin/perdoruesit" element={<AdminPerdoruesitPage />} />
+                  <Route path="admin/rolet" element={<AdminRoletPage />} />
+                </Route>
               </Route>
             </Route>
 

@@ -28,3 +28,8 @@ export const canMutateShitje = canWriteManagement
 
 /** Ofertat: shkrim vetëm Admin/Manager. */
 export const canWriteOferta = canWriteManagement
+
+/** Admin panel: vetëm rol Admin. */
+export function canAccessAdmin(roles: string[] | undefined): boolean {
+  return !!roles?.includes('Admin')
+}

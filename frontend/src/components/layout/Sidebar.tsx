@@ -1,12 +1,14 @@
 import { NavLink } from 'react-router-dom'
 import { Dumbbell } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useAuth } from '../../context/AuthContext'
 import { useRoleTheme } from '../../context/RoleThemeContext'
 import { getNavItems } from '../../config/navigation'
 
 export function Sidebar() {
+  const { user } = useAuth()
   const { role, theme } = useRoleTheme()
-  const items = getNavItems(role)
+  const items = getNavItems(role, user?.roles)
 
   return (
     <aside

@@ -10,3 +10,15 @@ export function resolveApiError(err: unknown, fallback: string): string {
   }
   return fallback
 }
+
+/** Mesazh API + lista Identity `errors[]` (admin users/roles). */
+export function resolveApiValidationError(err: unknown, fallback: string): string {
+  const base = resolveApiError(err, fallback)
+  if (err instanceof ApiError && err.body && typeof err.body === 'object' && 'errors' in err.body) {
+    const errors = (err.body as { errors: unknown }).errors
+    if (Array.isArray(errors) && errors.length > 0) {
+      return `${base} (${errors.join('; ')})`
+    }
+  }
+  return base
+}
