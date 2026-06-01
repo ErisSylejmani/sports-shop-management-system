@@ -36,14 +36,30 @@ public static class ShitjeEndpoints
 
     private static async Task<IResult> ListAsync(
         AppDbContext db,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         Guid? klientId,
-        Guid? punetorId)
+        Guid? punetorId,
+        CancellationToken cancellationToken)
     {
+        var (_, staffPunetorId, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+
+        if (isStaffOnly && staffPunetorId is null)
+        {
+            return Results.Json(
+                new { message = "Llogaria e stafit nuk është e lidhur me një punëtor. Kontaktoni administratorin." },
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        var effectivePunetorId =
+            StaffAccessHelper.ResolveListPunetorFilter(isStaffOnly, staffPunetorId, punetorId);
+
         var query = db.Shitjet.AsNoTracking().AsQueryable();
         if (klientId is not null)
             query = query.Where(s => s.KlientId == klientId.Value);
-        if (punetorId is not null)
-            query = query.Where(s => s.PunetorId == punetorId.Value);
+        if (effectivePunetorId is not null)
+            query = query.Where(s => s.PunetorId == effectivePunetorId.Value);
 
         var items = await (
             from s in query.OrderByDescending(s => s.DataShitjes)
@@ -66,9 +82,30 @@ public static class ShitjeEndpoints
 
     private static async Task<IResult> GetByIdAsync(
         Guid id,
+        AppDbContext db,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var (_, staffPunetorId, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+
+        if (isStaffOnly)
+        {
+            var salePunetorId = await db.Shitjet.AsNoTracking()
+                .Where(s => s.ShitjeId == id)
+                .Select(s => (Guid?)s.PunetorId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (salePunetorId is null)
+                return Results.NotFound(new { message = "Shitja nuk u gjet." });
+
+            var forbidden = StaffAccessHelper.ForbidStaffReadOtherSale(isStaffOnly, staffPunetorId, salePunetorId.Value);
+            if (forbidden is not null)
+                return forbidden;
+        }
+
         var detail = await shitjeService.GetDetailAsync(id, cancellationToken);
         if (detail is null)
             return Results.NotFound(new { message = "Shitja nuk u gjet." });
@@ -169,9 +206,17 @@ public static class ShitjeEndpoints
 
     private static async Task<IResult> ListDetajetAsync(
         Guid shitjeId,
+        AppDbContext db,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var denied = await DenyStaffIfNotOwnSaleAsync(
+            db, httpContext, userManager, shitjeId, cancellationToken);
+        if (denied is not null)
+            return denied;
+
         var items = await shitjeService.ListDetajetAsync(shitjeId, cancellationToken);
         if (items is null)
             return Results.NotFound(new { message = "Shitja nuk u gjet." });
@@ -182,14 +227,46 @@ public static class ShitjeEndpoints
     private static async Task<IResult> GetDetajAsync(
         Guid shitjeId,
         Guid detajId,
+        AppDbContext db,
         ShitjeService shitjeService,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        var denied = await DenyStaffIfNotOwnSaleAsync(
+            db, httpContext, userManager, shitjeId, cancellationToken);
+        if (denied is not null)
+            return denied;
+
         var row = await shitjeService.GetDetajAsync(shitjeId, detajId, cancellationToken);
         if (row is null)
             return Results.NotFound(new { message = "Rreshti ose shitja nuk u gjet." });
 
         return Results.Ok(row);
+    }
+
+    private static async Task<IResult?> DenyStaffIfNotOwnSaleAsync(
+        AppDbContext db,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        Guid shitjeId,
+        CancellationToken cancellationToken)
+    {
+        var (_, staffPunetorId, isStaffOnly) =
+            await StaffAccessHelper.GetContextAsync(httpContext, userManager, cancellationToken);
+
+        if (!isStaffOnly)
+            return null;
+
+        var salePunetorId = await db.Shitjet.AsNoTracking()
+            .Where(s => s.ShitjeId == shitjeId)
+            .Select(s => (Guid?)s.PunetorId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (salePunetorId is null)
+            return Results.NotFound(new { message = "Shitja nuk u gjet." });
+
+        return StaffAccessHelper.ForbidStaffReadOtherSale(isStaffOnly, staffPunetorId, salePunetorId.Value);
     }
 
     private static async Task<IResult> AddDetajAsync(

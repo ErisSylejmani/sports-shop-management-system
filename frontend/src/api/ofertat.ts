@@ -46,12 +46,11 @@ export function deleteOferta(id: string) {
   return apiFetch<void>(`/api/ofertat/${id}`, { method: 'DELETE' })
 }
 
-/** GET /api/ofertat/:id/produktet */
+
 export function listOfertaProduktet(ofertaId: string) {
   return apiFetch<OferteProduktDto[]>(`/api/ofertat/${ofertaId}/produktet`)
 }
 
-/** PUT /api/ofertat/:id/produktet — zëvendëson listën e produkteve. */
 export function replaceOfertaProduktet(ofertaId: string, produktIds: string[]) {
   return apiFetch<OferteProduktDto[]>(`/api/ofertat/${ofertaId}/produktet`, {
     method: 'PUT',
@@ -59,7 +58,6 @@ export function replaceOfertaProduktet(ofertaId: string, produktIds: string[]) {
   })
 }
 
-/** POST /api/ofertat/:id/produktet */
 export function addOfertaProdukt(ofertaId: string, produktId: string) {
   return apiFetch<OferteProduktDto>(`/api/ofertat/${ofertaId}/produktet`, {
     method: 'POST',
@@ -67,7 +65,6 @@ export function addOfertaProdukt(ofertaId: string, produktId: string) {
   })
 }
 
-/** DELETE /api/ofertat/:id/produktet/:oferteProduktId */
 export function removeOfertaProdukt(ofertaId: string, oferteProduktId: string) {
   return apiFetch<void>(`/api/ofertat/${ofertaId}/produktet/${oferteProduktId}`, {
     method: 'DELETE',

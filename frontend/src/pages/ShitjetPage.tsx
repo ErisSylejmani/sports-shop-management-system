@@ -5,7 +5,7 @@ import { listShitjet } from '../api/shitje'
 import { listKlientet } from '../api/klientet'
 import { listPunetoret } from '../api/punetoret'
 import type { KlientDto, PunetorDto, ShitjeSummaryDto } from '../api/types'
-import { canCreateShitje } from '../auth/permissions'
+import { canCreateShitje, canPickPunetorForShitje } from '../auth/permissions'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
 import { Card, CardBody } from '../components/ui/Card'
@@ -20,6 +20,7 @@ export function ShitjetPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const canCreate = canCreateShitje(user?.roles)
+  const showPunetorFilter = canPickPunetorForShitje(user?.roles)
 
   const [items, setItems] = useState<ShitjeSummaryDto[]>([])
   const [klientet, setKlientet] = useState<KlientDto[]>([])
@@ -46,15 +47,19 @@ export function ShitjetPage() {
   }
 
   useEffect(() => {
-    void Promise.all([listKlientet(), listPunetoret()])
-      .then(([k, p]) => {
-        setKlientet(k)
-        setPunetoret(p)
-      })
+    void listKlientet()
+      .then(setKlientet)
       .catch(() => {
-        /* filtrat mbeten bosh nëse dështojnë */
+        /* filtri klientit mbetet bosh nëse dështon */
       })
-  }, [])
+    if (showPunetorFilter) {
+      void listPunetoret()
+        .then(setPunetoret)
+        .catch(() => {
+          /* filtri punëtorit mbetet bosh nëse dështon */
+        })
+    }
+  }, [showPunetorFilter])
 
   useEffect(() => {
     void load()
@@ -83,7 +88,11 @@ export function ShitjetPage() {
     <div className="space-y-6">
       <PageHeader
         title="Shitjet"
-        subtitle="Lista e shitjeve me filtra opsionale sipas klientit dhe punëtorit."
+        subtitle={
+          showPunetorFilter
+            ? 'Lista e shitjeve me filtra opsionale sipas klientit dhe punëtorit.'
+            : 'Shitjet e regjistruara nga ju.'
+        }
         icon={ShoppingCart}
         actions={
           canCreate ? (
@@ -109,18 +118,20 @@ export function ShitjetPage() {
               </option>
             ))}
           </Select>
-          <Select
-            label="Filtro sipas punëtorit"
-            value={filterPunetorId}
-            onChange={(e) => setFilterPunetorId(e.target.value)}
-          >
-            <option value="">Të gjithë punëtorët</option>
-            {punetorOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
+          {showPunetorFilter && (
+            <Select
+              label="Filtro sipas punëtorit"
+              value={filterPunetorId}
+              onChange={(e) => setFilterPunetorId(e.target.value)}
+            >
+              <option value="">Të gjithë punëtorët</option>
+              {punetorOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          )}
         </CardBody>
       </Card>
 

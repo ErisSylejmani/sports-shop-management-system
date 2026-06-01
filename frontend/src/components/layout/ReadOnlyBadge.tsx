@@ -6,7 +6,7 @@ type Props = {
   className?: string
 }
 
-/** Tregues për stafin (User) — vetëm lexim, në linjë me AppLayout. */
+/** Tregues për stafin (User) — vetëm lexim */
 export function ReadOnlyBadge({ className }: Props) {
   const { role } = useRoleTheme()
   return (

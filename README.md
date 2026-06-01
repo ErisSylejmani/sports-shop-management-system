@@ -1,32 +1,114 @@
-# Sports Shop Management System
+# Sportix — Sports Shop Management System
 
-Sistem për menaxhimin e një dyqani sportiv: inventar, shitje, furnitorë, klientë, kthime dhe oferta.
+Ky repo është projekti ynë për menaxhimin e një dyqani sportiv: inventar, shitje, furnitorë, klientë, kthime dhe oferta. E kemi ndarë në **backend** (.NET API) dhe **frontend** (React).
 
-| **Backend** | .NET Web API, EF Core, MSSQL, JWT | **[backend/README.md](backend/README.md)** — nisja, secrets, migrime, Swagger |
-| **Frontend** | React, Tailwind CSS | *(në zhvillim)* |
+Nëse sapo e keni klonuar projektin, lexoni këtë faqe një herë — pastaj hyni te README e backend-it dhe frontend-it për detaje.
 
-## Fillim i shpejtë (backend)
+## Çfarë përfshin
+
+| Pjesa | Teknologji | Dokumentacion |
+|-------|------------|---------------|
+| **Backend** | .NET 10, EF Core, SQL Server, JWT | [backend/README.md](backend/README.md) |
+| **Frontend** | React, Vite, TypeScript, Tailwind v4 | [frontend/README.md](frontend/README.md) |
+
+**Rolet:** `Admin`, `Manager`, `User` (staf i dyqanit — shitës/kasier).
+
+## Si ta nisim (lokalisht)
+
+Duhen dy terminale: një për API-n, një për faqen.
+
+### 1. Backend
 
 ```bash
 cd backend
-dotnet user-secrets set "Jwt:SigningKey" "<çelës-i-gjatë-min-32-karaktere>" --project backend
-dotnet ef database update --project backend
-dotnet run --project backend
+dotnet user-secrets set "Jwt:SigningKey" "ndrysho-kete-me-nje-fjalekalim-te-gjate-min-32-shkronja" 
+dotnet ef database update
+dotnet run
 ```
 
-Hapni Swagger: http://localhost:5079/swagger
+- Swagger: http://localhost:5079/swagger  
+- Health: http://localhost:5079/api/health  
 
-## Kërkesat e lëndës (përmbledhje)
+`Jwt:SigningKey` **duhet** të jetë i gjatë (rreth 32+ karaktere). Mos e vendosni në Git — përdorni User Secrets si më sipër.
 
-- Autentifikim **JWT**, role **Admin / Manager / User**
-- CRUD për produkte, kategori, furnitorë, porosi furnitori, klientë, punëtorë, shitje (me detaje), kthime, oferta
-- **Dashboard** në frontend (obligativ)
-- Dokumentacion i qartë API dhe përdorimi
+### 2. Frontend
 
-Lista e plotë e entiteteve dhe kërkesave të detyrueshme të identitetit është në seksionin historik të projektit universitar; implementimi aktual i API-s përputhet me modulet e listuara në [backend/README.md](backend/README.md).
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
 
-## Ekipi
+- Faqja: http://localhost:5173  
+- Në `.env`: `VITE_API_URL=http://localhost:5079`
 
-- Pas `git pull`: `dotnet ef database update --project backend` nëse ka migrime të reja
-- Të dhënat (produkte, klientë) **nuk** vijnë me Git — përdorni databazë të përbashkët ose seed / API
-- Mos commit-oni fjalëkalime; përdorni **User Secrets** për JWT dhe connection string prod
+Backend-i duhet të jetë duke u ekzekutuar, përndryshe login dhe listat nuk funksionojnë.
+
+## E rëndësishme për ekipin: Git vs databaza
+
+`git pull` sjell **kodin** dhe **migrimet** (strukturën e tabelave). **Nuk** sjell produktet, klientët apo përdoruesit që dikush ka futur në laptopin e vet.
+
+| Vjen me Git | Nuk vjen me Git |
+|-------------|-----------------|
+| Kodi, migrimet EF | Produktet, shitjet, klientët |
+| Udhëzimet (README) | Përdoruesit në `AspNetUsers` |
+| | Fjalëkalimet / të dhënat e demo |
+
+Pra pas pull-it:
+
+```bash
+dotnet ef database update --project backend
+```
+
+…krijohen/përditësohen tabelat, por databaza lokale mbetet bosh për të dhëna, përveç roleve (`Admin`, `Manager`, `User`) që krijohen kur nisni API-n.
+
+### Databazë e përbashkët (rekomandohet për ekip)
+
+Nëse doni që të gjithë të shihni **të njëjtët** përdorues dhe produkte:
+
+1. Vendosni një SQL Server të përbashkët (Azure SQL, SQL në një PC të ekipit, etj.).
+2. Secili vendos **të njëjtin** connection string në User Secrets (jo në Git):
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=...;Database=SportsShopDb;..." --project backend
+```
+
+3. Për të njëjtin login nga laptopë të ndryshëm, përdorni edhe **të njëjtin** `Jwt:SigningKey` në User Secrets (secili ekzekuton API-n lokale, por token-i duhet të nënshkruhet me të njëjtin çelës).
+4. Një person bën `dotnet ef database update` kundrejt asaj DB; të tjerët vetëm lidhen.
+
+Detaje në [backend/README.md](backend/README.md) (seksioni *Databazë e përbashkët me ekipin*).
+
+## Pas çdo `git pull`
+
+1. `dotnet ef database update --project backend` (nëse ka migrime të reja)  
+2. Rinisni backend-in (ndaloni `dotnet run` i vjetër nëse DLL është i bllokuar)  
+3. `npm install` në frontend vetëm nëse ka ndryshime në `package.json`  
+4. Kontrolloni User Secrets (JWT + connection string)
+
+## Moduli në një vështrim
+
+- **Auth** — regjistrim, login, refresh token, `/api/me`  
+- **Katalog** — kategori, produkte (stok)  
+- **Furnitorë & porosi** — porosi furnitori me rreshta  
+- **Klientë & punëtorë** — punëtori mund të lidhet me llogari `User`  
+- **Shitje** — me detaje; stafi sheh vetëm shitjet e veta  
+- **Kthime & oferta**  
+- **Admin** — përdoruesit dhe rolet (vetëm Admin në UI)
+
+## Kur ta vendosim online (website)
+
+Atje nuk ka “databazë në laptop”. Ka **një** API + **një** databazë në server — të gjithë klientët e faqes përdorin të njëjtat të dhëna. Migrimet bëhen një herë në deploy, jo nga përdoruesit e web-it.
+
+## Ndihmë e shpejtë
+
+| Problem | Ku të shikoni |
+|---------|----------------|
+| API nuk niset / JWT | [backend/README.md](backend/README.md) |
+| CORS / login nga browser | Origjina në `Cors:AllowedOrigins` + `VITE_API_URL` |
+| Frontend bosh / 401 | A është backend-i duke u ekzekutuar? Token i skaduar? |
+| `dotnet ef` nuk gjendet | `dotnet tool install --global dotnet-ef` |
+
+---
+
+Projekt universitar — dokumentacionin e mbajmë të përditësuar që ekipi të mos humbasë kohë me setup-in. Pyetje? Shkruani në grup ose hapni issue në repo.

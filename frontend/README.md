@@ -1,81 +1,72 @@
-# Sports Shop — Frontend
+# Frontend — Sportix (React)
 
-React + Vite + TypeScript + Tailwind CSS v4.
+Faqja e dyqanit tonë sportiv: dashboard, katalog, shitje, kthime, furnitorë, etj. E kemi ndërtuar me ReactJS dhe Tailwind CSS
 
-## Nisja
+Backend-i duhet të jetë aktiv — pa API, login dhe të dhënat nuk vijnë.
 
-```bash
+## Nisja (hapat që bëjmë ne)
+
+
 cd frontend
 cp .env.example .env
 npm install
 npm run dev
+
+
+Hapni **https://localhost:5173** (Vite përdor HTTPS në dev — shihni URL-n që printon terminali).
+
+> **Gabim “unsupported protocol” në browser?**  
+> - Mos hapni `https://localhost:5079` (aty është vetëm HTTP). API HTTPS = **7051**.  
+> - Mos hapni `http://localhost:5173` kur Vite është HTTPS.  
+> - Rinisni `npm run dev` pas ndryshimeve në `vite.config.ts`.
+
+Në `.env`:
+
+```env
+VITE_API_URL=http://localhost:5079
 ```
 
-Hapni http://localhost:5173 (ose portin që tregon Vite). Sigurohuni që backend-i është aktiv dhe CORS lejon origjinën e frontend-it.
+Nëse API-ja është në port tjetër, ndryshoni vetëm këtë rresht.
 
-## F0 — Scaffold
+## Si duket aplikacioni
 
-- **Router:** `/login`, dashboard `/`, faqe placeholder për modulet
-- **API client:** `src/api/client.ts` (JWT nga `localStorage`)
-- **Tema sipas rolit:** Admin/Menaxher = **blu**, Staf (User) = **jeshil**
+### Tema sipas rolit
 
-## F1 — Auth (e përfunduar)
+- **Admin / Manager** — kalter
+- **Staf (User)** — gjelbert
 
-| Kërkesa | Status |
-|---------|--------|
-| Login → `POST /api/auth/login`, token në localStorage | ✅ |
-| `GET /api/me` → roles, punetorId, isStaff | ✅ |
-| `ProtectedRoute` → `/login` pa token | ✅ |
-| `RoleBasedHome` → dashboard për të gjithë rolet | ✅ |
-| Logout → hiq token, `/login` | ✅ |
-| AppLayout → emri nga `/api/me`, butoni Dil | ✅ |
-| `api/client.ts` → `Authorization: Bearer` | ✅ |
 
-Commit: `feat(frontend): F1 login dhe rrugë të mbrojtura`
 
-## F2 — Dashboard (e përfunduar)
 
-| Kërkesa | Status |
-|---------|--------|
-| Statistika nga API (produkte, shitje sot, klientë, oferta aktive) | ✅ |
-| 5 shitjet e fundit (tabelë) | ✅ |
-| Staf: mirëseardhje me `punetorEmri` nga `/api/me` | ✅ |
-| Loading skeleton | ✅ |
-| Gabime në shqip | ✅ |
+### Auth
 
-Commit: `feat(frontend): F2 dashboard me statistika`
+- Login → `POST /api/auth/login` → token në `localStorage`
+- `GET /api/me` → emër, rolet, `punetorId`, `isStaff`
+- Pa token → ridrejtim në `/login`
+- Logout → pastron token-in
 
-## F3 — Katalog
+Kodi: `src/api/client.ts`, `src/components/auth/`, `src/auth/`.
 
-- `/kategorite`: listë + create/edit/delete (veprime vetëm për Admin/Manager)
-- `/produkte`: tabelë me filtër lokal (emër, markë, kategori)
-- Forma për create/edit për kategori dhe produkte (inline në faqe)
-- Staf (`User`): vetëm lexim, pa butona shkrimi
-- UI i njëjtë me AppLayout: `PageSection`, `Alert`, `Select`/`Textarea`, `ReadOnlyBadge`, ikona në `PageHeader`
-
-Commit: `feat(frontend): F3 katalog produktesh`
-
-## F4 — Furnitorë dhe porosi furnitori
-
-- `/furnitore`: CRUD i plotë
-- `/porosi-furnitore`: listë, detaj dhe formë me rreshta dinamikë (`produktId`, `sasia`, `cmimiNjesi` opsional)
-- Akses UI vetëm për rolet Admin/Manager
-
-Commit: `feat(frontend): F4 furnitorë dhe porosi`
-
-## Struktura
+## Struktura e kodit
 
 ```
 src/
-  api/           # client HTTP
-  auth/          # token, role
-  components/    # UI + layout
-  config/        # navigim sidebar
+  api/           # thirrjet HTTP drejt backend-it
+  auth/          # token, role, lejet
+  components/    # UI, layout (AppLayout, sidebar…)
+  config/        # navigimi në sidebar
   context/       # RoleThemeProvider
-  pages/         # faqet
-  theme/         # ngjyrat për rol
+  pages/         # një faqe për modul
+  theme/         # ngjyrat sipas rolit
 ```
 
-## Commit
+Komponentët e përbashkët (butona, tabela, alerte) janë në `components/ui/` — i njëjti stil në të gjitha faqet.
 
-`feat(frontend): F0 scaffold UI, router dhe API client`
+Stafi: shumica e faqeve janë **vetëm lexim** për katalog; shkrimi kryesor është te shitjet dhe kthimet.
+
+## Build për production
+
+```bash
+npm run build
+```
+

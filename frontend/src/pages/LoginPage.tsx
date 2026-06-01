@@ -62,7 +62,7 @@ export function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@shembull.com"
               icon={<Mail className="h-4 w-4" />}
-              className="border-slate-700 bg-slate-800/80 text-white placeholder:text-slate-500"
+              className="border-slate-700 bg-slate-800/80 text-black placeholder:text-slate-500"
             />
             <Input
               label="Fjalëkalimi"
@@ -74,7 +74,7 @@ export function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               icon={<Lock className="h-4 w-4" />}
-              className="border-slate-700 bg-slate-800/80 text-white placeholder:text-slate-500"
+              className="border-slate-700 bg-slate-800/80 text-black placeholder:text-slate-500"
             />
 
             {error && (

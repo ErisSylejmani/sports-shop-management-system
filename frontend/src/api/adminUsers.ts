@@ -18,7 +18,6 @@ export type CreateAdminUserPayload = {
   password: string
   phoneNumber?: string | null
   eshteAktiv?: boolean
-  /** Rolet fillestare; default backend: ["User"] */
   roleNames?: string[]
 }
 
@@ -34,7 +33,7 @@ export type AdminUserRolePayload = {
   roleName: string
 }
 
-/** GET /api/admin/users?page=&pageSize= */
+
 export function listAdminUsers(params?: ListAdminUsersParams) {
   const qs = new URLSearchParams()
   if (params?.page) qs.set('page', String(params.page))
@@ -43,12 +42,12 @@ export function listAdminUsers(params?: ListAdminUsersParams) {
   return apiFetch<AdminUsersListResponse>(`/api/admin/users${query ? `?${query}` : ''}`)
 }
 
-/** GET /api/admin/users/:id */
+
 export function getAdminUser(id: string) {
   return apiFetch<AdminUserDetailDto>(`/api/admin/users/${id}`)
 }
 
-/** POST /api/admin/users — roleNames opsionale në trup */
+
 export function createAdminUser(body: CreateAdminUserPayload) {
   return apiFetch<AdminUserDetailDto>('/api/admin/users', {
     method: 'POST',
@@ -56,7 +55,7 @@ export function createAdminUser(body: CreateAdminUserPayload) {
   })
 }
 
-/** PUT /api/admin/users/:id */
+
 export function updateAdminUser(id: string, body: UpdateAdminUserPayload) {
   return apiFetch<AdminUserDetailDto>(`/api/admin/users/${id}`, {
     method: 'PUT',
@@ -64,12 +63,12 @@ export function updateAdminUser(id: string, body: UpdateAdminUserPayload) {
   })
 }
 
-/** DELETE /api/admin/users/:id */
+
 export function deleteAdminUser(id: string) {
   return apiFetch<void>(`/api/admin/users/${id}`, { method: 'DELETE' })
 }
 
-/** POST /api/admin/users/:id/roles — caktim roli */
+
 export function addAdminUserRole(id: string, roleName: string) {
   const body: AdminUserRolePayload = { roleName }
   return apiFetch<AdminUserRolesResponse>(`/api/admin/users/${id}/roles`, {
@@ -78,7 +77,7 @@ export function addAdminUserRole(id: string, roleName: string) {
   })
 }
 
-/** DELETE /api/admin/users/:id/roles/:roleName — heqje roli */
+
 export function removeAdminUserRole(id: string, roleName: string) {
   return apiFetch<AdminUserRolesResponse>(
     `/api/admin/users/${id}/roles/${encodeURIComponent(roleName)}`,

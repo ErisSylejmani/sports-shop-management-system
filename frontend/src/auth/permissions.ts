@@ -3,33 +3,24 @@ export function canWriteManagement(roles: string[] | undefined): boolean {
   return !!roles?.some((r) => r === 'Admin' || r === 'Manager')
 }
 
-/** Alias për qartësi semantike në faqet e katalogut. */
 export const canWriteCatalog = canWriteManagement
 
-/** Klientët: Admin/Manager shkrim, stafi vetëm lexim. */
 export const canWriteKlientet = canWriteManagement
 
-/** Shitje: Admin, Manager dhe User (staf) mund të regjistrojnë. */
 export function canCreateShitje(roles: string[] | undefined): boolean {
   return !!roles?.some((r) => r === 'Admin' || r === 'Manager' || r === 'User')
 }
 
-/** Kthime: të njëjtat role si shitjet. */
 export const canCreateKthim = canCreateShitje
 
-/** Kthime: ndryshim/fshirje vetëm Admin/Manager (stafi merr 403 nga API). */
 export const canMutateKthim = canWriteManagement
 
-/** Vetëm Admin/Manager zgjedhin punëtorin në formën e shitjes. */
 export const canPickPunetorForShitje = canWriteManagement
 
-/** Shitje: ndryshim/fshirje vetëm Admin/Manager (stafi merr 403 nga API). */
 export const canMutateShitje = canWriteManagement
 
-/** Ofertat: shkrim vetëm Admin/Manager. */
 export const canWriteOferta = canWriteManagement
 
-/** Admin panel: vetëm rol Admin. */
 export function canAccessAdmin(roles: string[] | undefined): boolean {
   return !!roles?.includes('Admin')
 }

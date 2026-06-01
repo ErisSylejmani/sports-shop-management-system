@@ -1,6 +1,5 @@
 export type AppRole = 'admin' | 'manager' | 'staff'
 
-/** Për F0/F1: zgjedh temën e layout-it (heqet kur vjen /api/me). */
 const PREVIEW_ROLE_KEY = 'sports_shop_preview_role'
 
 export function getPreviewRole(): AppRole {

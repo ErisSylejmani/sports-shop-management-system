@@ -216,7 +216,7 @@ public sealed class ShitjeService(AppDbContext db)
             return (null, $"Stoku nuk mjafton për '{produkt.Emri}'.", StatusCodes.Status409Conflict);
 
         var strategy = db.Database.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async () =>
+        return await strategy.ExecuteAsync<(KonfirmoShitjeDetajResponse?, string?, int)>(async () =>
         {
             await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
             try
@@ -287,7 +287,7 @@ public sealed class ShitjeService(AppDbContext db)
             return (null, $"Stoku nuk mjafton për '{produkt.Emri}'.", StatusCodes.Status409Conflict);
 
         var strategy = db.Database.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async () =>
+        return await strategy.ExecuteAsync<(KonfirmoShitjeDetajResponse?, string?, int)>(async () =>
         {
             await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
             try
@@ -498,7 +498,7 @@ public sealed class ShitjeService(AppDbContext db)
             return (null, validation.Error, validation.StatusCode);
 
         var strategy = db.Database.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async () =>
+        return await strategy.ExecuteAsync<(KonfirmoShitjeResponse?, string?, int)>(async () =>
         {
             await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
             try

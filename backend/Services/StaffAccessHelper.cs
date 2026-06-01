@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace backend.Services;
 
-/// <summary>Staf = rol User pa Manager/Admin; lidhur me PunetorId.</summary>
 public static class StaffAccessHelper
 {
     public static async Task<(ApplicationUser? User, Guid? PunetorId, bool IsStaffOnly)> GetContextAsync(
@@ -66,5 +65,33 @@ public static class StaffAccessHelper
         return Results.Json(
             new { message = $"Stafi (roli User) nuk mund të {veprim}. Kontaktoni menaxherin." },
             statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    //Stafi sheh vetëm shitjet e veta; Admin/Manager mund ti filtrojnë.
+    public static Guid? ResolveListPunetorFilter(bool isStaffOnly, Guid? staffPunetorId, Guid? requestedPunetorId)
+    {
+        if (!isStaffOnly)
+            return requestedPunetorId;
+
+        return staffPunetorId;
+    }
+
+    //403 nëse stafi nuk është i lidhur; 404 nëse shitja nuk është e tij 
+    public static IResult? ForbidStaffReadOtherSale(bool isStaffOnly, Guid? staffPunetorId, Guid salePunetorId)
+    {
+        if (!isStaffOnly)
+            return null;
+
+        if (staffPunetorId is null)
+        {
+            return Results.Json(
+                new { message = "Llogaria e stafit nuk është e lidhur me një punëtor. Kontaktoni administratorin." },
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        if (salePunetorId != staffPunetorId.Value)
+            return Results.NotFound(new { message = "Shitja nuk u gjet." });
+
+        return null;
     }
 }
